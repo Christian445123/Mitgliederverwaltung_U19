@@ -89,6 +89,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'erziehungsberechtigter' => $member['erziehungsberechtigter'],
                 'erziehungsberechtigter_email' => $member['erziehungsberechtigter_email'],
                 'erziehungsberechtigter_telefon' => $member['erziehungsberechtigter_telefon'],
+                'passnummer' => $member['passnummer'],
+                'name_laut_pass' => $member['name_laut_pass'],
+                'allergien' => $member['allergien'],
+                'nada_kurs_datum' => $member['nada_kurs_datum'] ?: null,
                 'beitrittsdatum' => $member['beitrittsdatum'] ?: null,
                 'status' => $member['status'],
             ];
@@ -101,6 +105,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         erziehungsberechtigter = :erziehungsberechtigter,
                         erziehungsberechtigter_email = :erziehungsberechtigter_email,
                         erziehungsberechtigter_telefon = :erziehungsberechtigter_telefon,
+                        passnummer = :passnummer, name_laut_pass = :name_laut_pass,
+                        allergien = :allergien, nada_kurs_datum = :nada_kurs_datum,
                         beitrittsdatum = :beitrittsdatum, status = :status
                         WHERE id = :id';
                 $pdo->prepare($sql)->execute($params);
@@ -116,10 +122,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $sql = 'INSERT INTO members
                         (mitgliedsnummer, vorname, nachname, geburtsdatum, strasse, plz, ort, email, telefon,
                          erziehungsberechtigter, erziehungsberechtigter_email, erziehungsberechtigter_telefon,
+                         passnummer, name_laut_pass, allergien, nada_kurs_datum,
                          beitrittsdatum, status, verify_token, access_password_hash)
                         VALUES
                         (:mitgliedsnummer, :vorname, :nachname, :geburtsdatum, :strasse, :plz, :ort, :email, :telefon,
                          :erziehungsberechtigter, :erziehungsberechtigter_email, :erziehungsberechtigter_telefon,
+                         :passnummer, :name_laut_pass, :allergien, :nada_kurs_datum,
                          :beitrittsdatum, :status, :verify_token, :access_password_hash)';
                 $pdo->prepare($sql)->execute($params);
                 $newId = (int) $pdo->lastInsertId();
@@ -219,6 +227,28 @@ require __DIR__ . '/../includes/admin_header.php';
                 <label for="erziehungsberechtigter_telefon">Telefon</label>
                 <input type="text" id="erziehungsberechtigter_telefon" name="erziehungsberechtigter_telefon" value="<?= e($member['erziehungsberechtigter_telefon']) ?>">
             </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Sportliche & sonstige Angaben</legend>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="passnummer">Passnummer</label>
+                <input type="text" id="passnummer" name="passnummer" value="<?= e($member['passnummer']) ?>">
+            </div>
+            <div class="form-group">
+                <label for="name_laut_pass">Name laut Pass (falls abweichend)</label>
+                <input type="text" id="name_laut_pass" name="name_laut_pass" value="<?= e($member['name_laut_pass']) ?>">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="nada_kurs_datum">NADA-Kurs absolviert am</label>
+            <input type="date" id="nada_kurs_datum" name="nada_kurs_datum" value="<?= e(formatDateForInput($member['nada_kurs_datum'])) ?>">
+        </div>
+        <div class="form-group">
+            <label for="allergien">Allergien</label>
+            <textarea id="allergien" name="allergien" rows="3"><?= e($member['allergien']) ?></textarea>
         </div>
     </fieldset>
 

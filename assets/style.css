@@ -109,7 +109,8 @@ form input[type=text],
 form input[type=email],
 form input[type=password],
 form input[type=date],
-form select {
+form select,
+form textarea {
     width: 100%;
     padding: 9px 10px;
     border: 1px solid var(--color-border);
@@ -117,9 +118,10 @@ form select {
     font-size: 0.95rem;
     background: var(--color-surface);
     color: var(--color-text);
+    font-family: inherit;
 }
 
-form input:focus, form select:focus {
+form input:focus, form select:focus, form textarea:focus {
     outline: none;
     border-color: var(--color-primary);
     box-shadow: 0 0 0 3px rgba(37,99,235,0.15);

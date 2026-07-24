@@ -139,6 +139,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $member['erziehungsberechtigter'] = trim($_POST['erziehungsberechtigter'] ?? '');
         $member['erziehungsberechtigter_email'] = trim($_POST['erziehungsberechtigter_email'] ?? '');
         $member['erziehungsberechtigter_telefon'] = trim($_POST['erziehungsberechtigter_telefon'] ?? '');
+        $member['passnummer'] = trim($_POST['passnummer'] ?? '');
+        $member['name_laut_pass'] = trim($_POST['name_laut_pass'] ?? '');
+        $member['allergien'] = trim($_POST['allergien'] ?? '');
+        $member['nada_kurs_datum'] = trim($_POST['nada_kurs_datum'] ?? '');
 
         if ($member['vorname'] === '') {
             $errors[] = 'Vorname ist ein Pflichtfeld.';
@@ -157,6 +161,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($member['geburtsdatum'] !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $member['geburtsdatum'])) {
             $errors[] = 'Ungültiges Geburtsdatum.';
         }
+        if ($member['nada_kurs_datum'] !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $member['nada_kurs_datum'])) {
+            $errors[] = 'Ungültiges Datum beim NADA-Kurs.';
+        }
 
         if (!$errors) {
             $sql = 'UPDATE members SET vorname = :vorname, nachname = :nachname, geburtsdatum = :geburtsdatum,
@@ -164,6 +171,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     erziehungsberechtigter = :erziehungsberechtigter,
                     erziehungsberechtigter_email = :erziehungsberechtigter_email,
                     erziehungsberechtigter_telefon = :erziehungsberechtigter_telefon,
+                    passnummer = :passnummer, name_laut_pass = :name_laut_pass,
+                    allergien = :allergien, nada_kurs_datum = :nada_kurs_datum,
                     verified_at = NOW()
                     WHERE id = :id';
             $params = [
@@ -178,6 +187,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'erziehungsberechtigter' => $member['erziehungsberechtigter'],
                 'erziehungsberechtigter_email' => $member['erziehungsberechtigter_email'],
                 'erziehungsberechtigter_telefon' => $member['erziehungsberechtigter_telefon'],
+                'passnummer' => $member['passnummer'],
+                'name_laut_pass' => $member['name_laut_pass'],
+                'allergien' => $member['allergien'],
+                'nada_kurs_datum' => $member['nada_kurs_datum'] ?: null,
                 'id' => $member['id'],
             ];
             $pdo->prepare($sql)->execute($params);
@@ -273,6 +286,28 @@ require __DIR__ . '/includes/public_header.php';
                     <label for="erziehungsberechtigter_telefon">Telefon</label>
                     <input type="text" id="erziehungsberechtigter_telefon" name="erziehungsberechtigter_telefon" value="<?= e($member['erziehungsberechtigter_telefon']) ?>">
                 </div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Sportliche & sonstige Angaben</legend>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="passnummer">Passnummer</label>
+                    <input type="text" id="passnummer" name="passnummer" value="<?= e($member['passnummer']) ?>">
+                </div>
+                <div class="form-group">
+                    <label for="name_laut_pass">Name laut Pass (falls abweichend)</label>
+                    <input type="text" id="name_laut_pass" name="name_laut_pass" value="<?= e($member['name_laut_pass']) ?>">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="nada_kurs_datum">NADA-Kurs absolviert am</label>
+                <input type="date" id="nada_kurs_datum" name="nada_kurs_datum" value="<?= e(formatDateForInput($member['nada_kurs_datum'])) ?>">
+            </div>
+            <div class="form-group">
+                <label for="allergien">Allergien</label>
+                <textarea id="allergien" name="allergien" rows="3"><?= e($member['allergien']) ?></textarea>
             </div>
         </fieldset>
 
