@@ -70,11 +70,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if (!$errors) {
-            $params = $member;
-            $params['geburtsdatum'] = $member['geburtsdatum'] ?: null;
-            $params['beitrittsdatum'] = $member['beitrittsdatum'] ?: null;
+            $baseParams = [
+                'vorname' => $member['vorname'],
+                'nachname' => $member['nachname'],
+                'geburtsdatum' => $member['geburtsdatum'] ?: null,
+                'strasse' => $member['strasse'],
+                'plz' => $member['plz'],
+                'ort' => $member['ort'],
+                'email' => $member['email'],
+                'telefon' => $member['telefon'],
+                'erziehungsberechtigter' => $member['erziehungsberechtigter'],
+                'erziehungsberechtigter_email' => $member['erziehungsberechtigter_email'],
+                'erziehungsberechtigter_telefon' => $member['erziehungsberechtigter_telefon'],
+                'beitrittsdatum' => $member['beitrittsdatum'] ?: null,
+                'status' => $member['status'],
+            ];
 
             if ($isEdit) {
+                $params = $baseParams;
                 $params['id'] = $id;
                 $sql = 'UPDATE members SET vorname = :vorname, nachname = :nachname, geburtsdatum = :geburtsdatum,
                         strasse = :strasse, plz = :plz, ort = :ort, email = :email, telefon = :telefon,
@@ -87,6 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['flash'] = 'Mitglied wurde aktualisiert.';
                 redirect('index.php');
             } else {
+                $params = $baseParams;
                 $params['mitgliedsnummer'] = generateMitgliedsnummer($pdo);
                 $params['verify_token'] = generateVerifyToken();
                 $sql = 'INSERT INTO members

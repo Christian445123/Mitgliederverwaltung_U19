@@ -76,9 +76,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     erziehungsberechtigter_telefon = :erziehungsberechtigter_telefon,
                     verified_at = NOW()
                     WHERE id = :id';
-            $params = $member;
-            $params['geburtsdatum'] = $member['geburtsdatum'] ?: null;
-            $params['id'] = $member['id'];
+            $params = [
+                'vorname' => $member['vorname'],
+                'nachname' => $member['nachname'],
+                'geburtsdatum' => $member['geburtsdatum'] ?: null,
+                'strasse' => $member['strasse'],
+                'plz' => $member['plz'],
+                'ort' => $member['ort'],
+                'email' => $member['email'],
+                'telefon' => $member['telefon'],
+                'erziehungsberechtigter' => $member['erziehungsberechtigter'],
+                'erziehungsberechtigter_email' => $member['erziehungsberechtigter_email'],
+                'erziehungsberechtigter_telefon' => $member['erziehungsberechtigter_telefon'],
+                'id' => $member['id'],
+            ];
             $pdo->prepare($sql)->execute($params);
             $saved = true;
         }
