@@ -3,6 +3,10 @@
  * Öffentliche Seite, die per individuellem Token aufgerufen wird
  * (kein Admin-Login erforderlich). Das Mitglied kann hier die bei
  * der Anlage hinterlegten Daten prüfen und korrigieren.
+ *
+ * Zum Schutz der personenbezogenen Daten (DSGVO Art. 32) reicht der Link
+ * allein nicht aus: Erst nach Eingabe von E-Mail-Adresse und dem separat
+ * mitgeteilten Zugangscode werden die Daten angezeigt.
  */
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/db.php';
@@ -33,6 +37,90 @@ if (!$member) {
     exit;
 }
 
+$memberId = (int) $member['id'];
+$sessionKey = 'verify_unlocked_' . $memberId;
+$unlocked = !empty($_SESSION[$sessionKey]);
+
+const MAX_VERIFY_ATTEMPTS = 5;
+const LOCKOUT_MINUTES = 15;
+
+// --- Stufe 1: Zugang per E-Mail + Zugangscode freischalten ------------------
+if (!$unlocked) {
+    $unlockError = '';
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['stage'] ?? '') === 'unlock') {
+        if (!verifyCsrf()) {
+            $unlockError = 'Ungültige Anfrage. Bitte lade die Seite neu und versuche es erneut.';
+        } else {
+            $lockedUntil = $member['verify_locked_until'] ? strtotime($member['verify_locked_until']) : null;
+
+            if ($lockedUntil && $lockedUntil > time()) {
+                $minutesLeft = max(1, (int) ceil(($lockedUntil - time()) / 60));
+                $unlockError = "Zu viele Fehlversuche. Bitte in etwa {$minutesLeft} Minute(n) erneut versuchen.";
+            } else {
+                $emailInput = trim($_POST['email'] ?? '');
+                $passwordInput = (string) ($_POST['password'] ?? '');
+
+                $emailMatches = !empty($member['email'])
+                    && strcasecmp(trim($member['email']), $emailInput) === 0;
+                $passwordMatches = !empty($member['access_password_hash'])
+                    && password_verify($passwordInput, $member['access_password_hash']);
+
+                if ($emailMatches && $passwordMatches) {
+                    $_SESSION[$sessionKey] = true;
+                    $pdo->prepare('UPDATE members SET failed_verify_attempts = 0, verify_locked_until = NULL WHERE id = :id')
+                        ->execute(['id' => $memberId]);
+                    redirect('verify.php?token=' . $token);
+                } else {
+                    $attempts = (int) $member['failed_verify_attempts'] + 1;
+                    $params = ['attempts' => $attempts, 'id' => $memberId];
+                    $lockClause = '';
+                    if ($attempts >= MAX_VERIFY_ATTEMPTS) {
+                        $lockClause = ', verify_locked_until = DATE_ADD(NOW(), INTERVAL ' . LOCKOUT_MINUTES . ' MINUTE)';
+                    }
+                    $pdo->prepare("UPDATE members SET failed_verify_attempts = :attempts $lockClause WHERE id = :id")
+                        ->execute($params);
+                    $member['failed_verify_attempts'] = $attempts;
+                    $unlockError = 'E-Mail-Adresse oder Zugangscode ist falsch.';
+                }
+            }
+        }
+    }
+
+    $pageTitle = 'Zugang zu meinen Daten';
+    require __DIR__ . '/includes/public_header.php';
+    ?>
+    <div class="verify-box">
+        <h1>Zugang zu deinen Mitgliedsdaten</h1>
+        <p>Zum Schutz deiner Daten benötigen wir zusätzlich zum Link deine hinterlegte
+           E-Mail-Adresse und den dir separat mitgeteilten Zugangscode.</p>
+
+        <?php if ($unlockError): ?>
+            <p class="alert alert-error"><?= e($unlockError) ?></p>
+        <?php endif; ?>
+
+        <form method="post" action="verify.php?token=<?= e($token) ?>" novalidate>
+            <?= csrfField() ?>
+            <input type="hidden" name="stage" value="unlock">
+            <label for="email">E-Mail-Adresse</label>
+            <input type="email" id="email" name="email" required autofocus>
+            <label for="password">Zugangscode</label>
+            <input type="text" id="password" name="password" required autocomplete="off">
+            <button type="submit" class="btn btn-primary" style="margin-top:20px;">Zugang prüfen</button>
+        </form>
+
+        <p class="privacy-note">
+            Hinweis zum Datenschutz: Deine Angaben werden ausschließlich zur Mitgliederverwaltung
+            des Vereins verarbeitet und nicht an Dritte weitergegeben. Details dazu findest du in
+            der Datenschutzerklärung des Vereins.
+        </p>
+    </div>
+    <?php
+    require __DIR__ . '/includes/public_footer.php';
+    exit;
+}
+
+// --- Stufe 2: freigeschaltet - Daten anzeigen/bearbeiten --------------------
 $errors = [];
 $saved = false;
 
@@ -58,7 +146,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($member['nachname'] === '') {
             $errors[] = 'Nachname ist ein Pflichtfeld.';
         }
-        if ($member['email'] !== '' && !filter_var($member['email'], FILTER_VALIDATE_EMAIL)) {
+        if ($member['email'] === '') {
+            $errors[] = 'E-Mail ist ein Pflichtfeld.';
+        } elseif (!filter_var($member['email'], FILTER_VALIDATE_EMAIL)) {
             $errors[] = 'Die angegebene E-Mail-Adresse ist ungültig.';
         }
         if ($member['erziehungsberechtigter_email'] !== '' && !filter_var($member['erziehungsberechtigter_email'], FILTER_VALIDATE_EMAIL)) {
@@ -158,8 +248,8 @@ require __DIR__ . '/includes/public_header.php';
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label for="email">E-Mail</label>
-                    <input type="email" id="email" name="email" value="<?= e($member['email']) ?>">
+                    <label for="email">E-Mail *</label>
+                    <input type="email" id="email" name="email" required value="<?= e($member['email']) ?>">
                 </div>
                 <div class="form-group">
                     <label for="telefon">Telefon</label>
@@ -188,5 +278,11 @@ require __DIR__ . '/includes/public_header.php';
 
         <button type="submit" class="btn btn-primary">Bestätigen & Speichern</button>
     </form>
+
+    <p class="privacy-note">
+        Hinweis zum Datenschutz: Deine Angaben werden ausschließlich zur Mitgliederverwaltung
+        des Vereins verarbeitet und nicht an Dritte weitergegeben. Details dazu findest du in
+        der Datenschutzerklärung des Vereins.
+    </p>
 </div>
 <?php require __DIR__ . '/includes/public_footer.php'; ?>

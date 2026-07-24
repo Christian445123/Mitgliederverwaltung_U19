@@ -259,6 +259,14 @@ form.member-form button[type=submit] { margin-top: 24px; }
     gap: 8px;
     margin: 16px 0;
 }
+.privacy-note {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-border);
+    font-size: 0.8rem;
+    color: var(--color-muted);
+}
+
 .link-box input {
     flex: 1;
     padding: 9px 10px;

@@ -32,15 +32,36 @@ Einfache PHP/MySQL-Anwendung zur Mitgliederverwaltung mit Admin-Login und
 
 ## Ablauf der Datenprüfung durch Mitglieder
 
-Beim Anlegen eines Mitglieds wird automatisch ein zufälliger, nicht erratbarer
-Token erzeugt. Der daraus gebildete Link (`verify.php?token=...`) zeigt dem
-Mitglied ein mit den hinterlegten Daten vorausgefülltes Formular. Stimmen die
-Daten nicht (mehr), kann das Mitglied sie direkt dort korrigieren und
-speichern – der Zeitpunkt der Bestätigung wird in der Mitgliederliste als
-„Daten geprüft“ angezeigt. Persönliche Felder wie Mitgliedsnummer und Status
-sind über diesen Link nicht änderbar, das bleibt dem Admin-Bereich
-vorbehalten. Bei Verdacht auf Missbrauch kann der Link im Admin-Bereich
-jederzeit neu generiert werden (der alte wird damit ungültig).
+Beim Anlegen eines Mitglieds werden automatisch ein zufälliger, nicht
+erratbarer Link-Token sowie ein separater Zugangscode (Zufallspasswort)
+erzeugt. Der Link (`verify.php?token=...`) allein zeigt **keine** Daten an –
+das Mitglied muss zusätzlich seine hinterlegte E-Mail-Adresse und den
+Zugangscode eingeben. Erst danach wird das mit den hinterlegten Daten
+vorausgefüllte Formular angezeigt. Stimmen die Daten nicht (mehr), kann das
+Mitglied sie direkt dort korrigieren und speichern – der Zeitpunkt der
+Bestätigung wird in der Mitgliederliste als „Daten geprüft“ angezeigt.
+Persönliche Felder wie Mitgliedsnummer und Status sind über diesen Link nicht
+änderbar, das bleibt dem Admin-Bereich vorbehalten.
+
+**Sicherheits-/Datenschutzmaßnahmen (DSGVO):**
+- Zugangscode wird nur als Hash gespeichert und dem Admin nur einmalig direkt
+  nach dem Anlegen bzw. Neu-Generieren angezeigt – Link und Zugangscode
+  sollten über getrennte Kanäle (z. B. E-Mail für den Link, Telefon/SMS für
+  den Code) an das Mitglied übermittelt werden.
+- Nach 5 falschen Zugangsversuchen wird der Zugang für 15 Minuten gesperrt
+  (Brute-Force-Schutz).
+- Link und/oder Zugangscode können im Admin-Bereich (`admin/member_link.php`)
+  jederzeit unabhängig voneinander neu generiert werden (der jeweils alte
+  Wert wird damit ungültig).
+- Auf der öffentlichen Seite wird ein kurzer Datenschutzhinweis angezeigt.
+  **Der Platzhaltertext ist noch durch eure echte Datenschutzerklärung /
+  einen Link darauf zu ersetzen** – das ist eine inhaltliche/rechtliche
+  Aufgabe, die der Verein (ggf. mit Datenschutzberater) festlegen muss und
+  die nicht durch Code allein "DSGVO-konform" gemacht werden kann.
+
+Bereits vor dieser Änderung angelegte Mitglieder haben noch keinen
+Zugangscode – für sie muss einmalig über „Neuen Zugangscode generieren“ in
+`member_link.php` ein Code erzeugt werden, bevor ihr Link nutzbar ist.
 
 ## Auto-Migration
 

@@ -62,10 +62,17 @@ function membersColumnDefinitions(): array
         'erziehungsberechtigter'           => "VARCHAR(150) NULL",
         'erziehungsberechtigter_email'     => "VARCHAR(190) NULL",
         'erziehungsberechtigter_telefon'   => "VARCHAR(50) NULL",
+        'passnummer'                       => "VARCHAR(30) NULL",
+        'name_laut_pass'                   => "VARCHAR(150) NULL",
+        'allergien'                        => "TEXT NULL",
+        'nada_kurs_datum'                  => "DATE NULL",
         'beitrittsdatum'                   => "DATE NULL",
         'status'                           => "ENUM('aktiv','inaktiv') NOT NULL DEFAULT 'aktiv'",
         'verify_token'                     => "CHAR(64) NULL",
         'verified_at'                      => "DATETIME NULL",
+        'access_password_hash'             => "VARCHAR(255) NULL",
+        'failed_verify_attempts'           => "INT UNSIGNED NOT NULL DEFAULT 0",
+        'verify_locked_until'              => "DATETIME NULL",
     ];
 }
 

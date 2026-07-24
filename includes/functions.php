@@ -41,6 +41,22 @@ function generateVerifyToken(): string
     return bin2hex(random_bytes(32)); // 64 Zeichen
 }
 
+/**
+ * Zufälligen Zugangscode (Passwort) erzeugen, der zusätzlich zur E-Mail-Adresse
+ * benötigt wird, um über den Verifizierungs-Link Mitgliedsdaten einzusehen.
+ * Zeichensatz ohne leicht verwechselbare Zeichen (0/O, 1/l/I).
+ */
+function generateAccessPassword(int $length = 10): string
+{
+    $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+    $max = strlen($alphabet) - 1;
+    $password = '';
+    for ($i = 0; $i < $length; $i++) {
+        $password .= $alphabet[random_int(0, $max)];
+    }
+    return $password;
+}
+
 /** Nächste freie Mitgliedsnummer ermitteln, Format: M-2026-0001 */
 function generateMitgliedsnummer(PDO $pdo): string
 {

@@ -16,6 +16,7 @@ $member = [
     'strasse' => '', 'plz' => '', 'ort' => '',
     'email' => '', 'telefon' => '',
     'erziehungsberechtigter' => '', 'erziehungsberechtigter_email' => '', 'erziehungsberechtigter_telefon' => '',
+    'passnummer' => '', 'name_laut_pass' => '', 'allergien' => '', 'nada_kurs_datum' => '',
     'beitrittsdatum' => date('Y-m-d'), 'status' => 'aktiv',
 ];
 
@@ -47,6 +48,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $member['erziehungsberechtigter'] = trim($_POST['erziehungsberechtigter'] ?? '');
         $member['erziehungsberechtigter_email'] = trim($_POST['erziehungsberechtigter_email'] ?? '');
         $member['erziehungsberechtigter_telefon'] = trim($_POST['erziehungsberechtigter_telefon'] ?? '');
+        $member['passnummer'] = trim($_POST['passnummer'] ?? '');
+        $member['name_laut_pass'] = trim($_POST['name_laut_pass'] ?? '');
+        $member['allergien'] = trim($_POST['allergien'] ?? '');
+        $member['nada_kurs_datum'] = trim($_POST['nada_kurs_datum'] ?? '');
         $member['beitrittsdatum'] = trim($_POST['beitrittsdatum'] ?? '');
         $member['status'] = ($_POST['status'] ?? 'aktiv') === 'inaktiv' ? 'inaktiv' : 'aktiv';
 
@@ -56,13 +61,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($member['nachname'] === '') {
             $errors[] = 'Nachname ist ein Pflichtfeld.';
         }
-        if ($member['email'] !== '' && !filter_var($member['email'], FILTER_VALIDATE_EMAIL)) {
+        if ($member['email'] === '') {
+            $errors[] = 'E-Mail ist ein Pflichtfeld (wird für den Zugriff auf den Verifizierungs-Link benötigt).';
+        } elseif (!filter_var($member['email'], FILTER_VALIDATE_EMAIL)) {
             $errors[] = 'Die E-Mail-Adresse des Mitglieds ist ungültig.';
         }
         if ($member['erziehungsberechtigter_email'] !== '' && !filter_var($member['erziehungsberechtigter_email'], FILTER_VALIDATE_EMAIL)) {
             $errors[] = 'Die E-Mail-Adresse des Erziehungsberechtigten ist ungültig.';
         }
-        foreach (['geburtsdatum', 'beitrittsdatum'] as $dateField) {
+        foreach (['geburtsdatum', 'beitrittsdatum', 'nada_kurs_datum'] as $dateField) {
             if ($member[$dateField] !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $member[$dateField])) {
                 $errors[] = 'Ungültiges Datumsformat.';
                 break;
@@ -100,20 +107,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['flash'] = 'Mitglied wurde aktualisiert.';
                 redirect('index.php');
             } else {
+                $accessPassword = generateAccessPassword();
+
                 $params = $baseParams;
                 $params['mitgliedsnummer'] = generateMitgliedsnummer($pdo);
                 $params['verify_token'] = generateVerifyToken();
+                $params['access_password_hash'] = password_hash($accessPassword, PASSWORD_DEFAULT);
                 $sql = 'INSERT INTO members
                         (mitgliedsnummer, vorname, nachname, geburtsdatum, strasse, plz, ort, email, telefon,
                          erziehungsberechtigter, erziehungsberechtigter_email, erziehungsberechtigter_telefon,
-                         beitrittsdatum, status, verify_token)
+                         beitrittsdatum, status, verify_token, access_password_hash)
                         VALUES
                         (:mitgliedsnummer, :vorname, :nachname, :geburtsdatum, :strasse, :plz, :ort, :email, :telefon,
                          :erziehungsberechtigter, :erziehungsberechtigter_email, :erziehungsberechtigter_telefon,
-                         :beitrittsdatum, :status, :verify_token)';
+                         :beitrittsdatum, :status, :verify_token, :access_password_hash)';
                 $pdo->prepare($sql)->execute($params);
                 $newId = (int) $pdo->lastInsertId();
-                $_SESSION['flash'] = 'Mitglied wurde angelegt. Der Verifizierungs-Link kann nun weitergegeben werden.';
+                $_SESSION['flash'] = 'Mitglied wurde angelegt. Link und Zugangscode können nun weitergegeben werden.';
+                $_SESSION['generated_password'] = $accessPassword;
                 redirect('member_link.php?id=' . $newId);
             }
         }
@@ -183,8 +194,8 @@ require __DIR__ . '/../includes/admin_header.php';
         </div>
         <div class="form-row">
             <div class="form-group">
-                <label for="email">E-Mail</label>
-                <input type="email" id="email" name="email" value="<?= e($member['email']) ?>">
+                <label for="email">E-Mail *</label>
+                <input type="email" id="email" name="email" required value="<?= e($member['email']) ?>">
             </div>
             <div class="form-group">
                 <label for="telefon">Telefon</label>
