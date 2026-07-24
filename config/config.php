@@ -22,7 +22,7 @@ define('FORCE_HTTPS_COOKIE', true);
 
 // --- Fehleranzeige --------------------------------------------------------
 // Im Produktivbetrieb auf false stellen!
-define('DEBUG', false);
+define('DEBUG', true);
 
 if (DEBUG) {
     ini_set('display_errors', '1');

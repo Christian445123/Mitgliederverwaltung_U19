@@ -1,5 +1,3 @@
-Options -Indexes
-
 <FilesMatch "\.(sql|md|log)$">
     <IfModule mod_authz_core.c>
         Require all denied
