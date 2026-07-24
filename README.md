@@ -26,9 +26,26 @@ Einfache PHP/MySQL-Anwendung zur Mitgliederverwaltung mit Admin-Login und
 4. **Aufrufen**
    - `admin/login.php` – Admin-Login
    - `admin/index.php` – Mitgliederliste (nach Login), Anlegen/Bearbeiten/Löschen
+   - `admin/users.php` – Benutzerverwaltung (nur für Administratoren, siehe unten)
    - `verify.php?token=...` – öffentliche Selbstauskunftsseite, der Link wird
      beim Anlegen eines Mitglieds automatisch erzeugt und ist über
      „Link“ in der Mitgliederliste jederzeit abrufbar bzw. neu generierbar.
+
+## Benutzerverwaltung & Rollen
+
+Es gibt zwei Rollen:
+- **Administrator**: alles, inkl. Benutzerverwaltung (Benutzer anlegen,
+  bearbeiten, löschen, Rollen vergeben).
+- **Bearbeiter**: kann Mitglieder anlegen/bearbeiten/löschen und
+  Links/Zugangscodes verwalten, sieht/nutzt die Benutzerverwaltung aber nicht
+  (auch nicht per direktem Aufruf der URL – serverseitig abgesichert).
+
+Der über `bin/create_admin.php` angelegte erste Account wird automatisch
+Administrator. Weitere Benutzer legt man danach bequem über
+`admin/users.php` → „+ Neuer Benutzer“ an. Schutzmechanismen: man kann sich
+nicht selbst löschen, und der letzte verbleibende Administrator kann weder
+gelöscht noch auf „Bearbeiter“ herabgestuft werden (damit niemand sich
+versehentlich aussperrt).
 
 ## Ablauf der Datenprüfung durch Mitglieder
 

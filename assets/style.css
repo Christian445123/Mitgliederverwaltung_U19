@@ -67,9 +67,31 @@ a { color: var(--color-primary); }
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 24px;
 }
 
 .topbar-title { font-weight: 600; }
+
+.topbar-nav {
+    display: flex;
+    gap: 16px;
+}
+
+.topbar-nav a {
+    color: var(--color-text);
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.topbar-nav a:hover { text-decoration: underline; }
+
 .topbar-user { font-size: 0.9rem; color: var(--color-muted); }
 
 .content, .public-page .content {

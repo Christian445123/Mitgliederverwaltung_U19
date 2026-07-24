@@ -14,9 +14,18 @@
 </head>
 <body>
     <header class="topbar">
-        <div class="topbar-title">Mitgliederverwaltung</div>
+        <div class="topbar-left">
+            <span class="topbar-title">Mitgliederverwaltung</span>
+            <nav class="topbar-nav">
+                <a href="index.php">Mitglieder</a>
+                <?php if (isAdministrator()): ?>
+                    <a href="users.php">Benutzer</a>
+                <?php endif; ?>
+            </nav>
+        </div>
         <div class="topbar-user">
             Angemeldet als <strong><?= e(currentAdminUsername()) ?></strong>
+            (<?= e(isAdministrator() ? 'Administrator' : 'Bearbeiter') ?>)
             &middot; <a href="logout.php">Abmelden</a>
         </div>
     </header>

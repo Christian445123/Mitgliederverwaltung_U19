@@ -42,6 +42,9 @@ function adminsColumnDefinitions(): array
     return [
         'username'      => "VARCHAR(64) NOT NULL",
         'password_hash' => "VARCHAR(255) NOT NULL",
+        // Neue Spalte bekommt DEFAULT 'administrator', damit bereits bestehende
+        // Konten beim Update nicht versehentlich ihren Zugriff verlieren.
+        'role'          => "ENUM('administrator','bearbeiter') NOT NULL DEFAULT 'administrator'",
         'created_at'    => "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
     ];
 }

@@ -22,13 +22,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Bitte Benutzername und Passwort eingeben.';
         } else {
             $pdo = getDb();
-            $stmt = $pdo->prepare('SELECT id, username, password_hash FROM admins WHERE username = :username');
+            $stmt = $pdo->prepare('SELECT id, username, password_hash, role FROM admins WHERE username = :username');
             $stmt->execute(['username' => $username]);
             $admin = $stmt->fetch();
 
             // Bewusst dieselbe Fehlermeldung bei unbekanntem Benutzer und falschem Passwort
             if ($admin && password_verify($password, $admin['password_hash'])) {
-                loginAdmin((int) $admin['id'], $admin['username']);
+                loginAdmin((int) $admin['id'], $admin['username'], $admin['role']);
                 redirect('index.php');
             } else {
                 $error = 'Benutzername oder Passwort ist falsch.';
