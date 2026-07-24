@@ -6,9 +6,10 @@ Einfache PHP/MySQL-Anwendung zur Mitgliederverwaltung mit Admin-Login und
 ## Setup
 
 1. **Datenbank anlegen**
-   Das Schema in `sql/schema.sql` importieren (z. B. via phpMyAdmin oder
-   `mysql -u root -p < sql/schema.sql`). Es legt die Datenbank
-   `mitgliederverwaltung` sowie die Tabellen `admins` und `members` an.
+   Die Tabellen `admins` und `members` werden automatisch beim ersten
+   Seitenaufruf angelegt (siehe "Auto-Migration" unten) – ein manueller
+   SQL-Import ist nicht mehr zwingend nötig. `sql/schema.sql` dient nur noch
+   als Referenz/Dokumentation des Schemas.
 
 2. **Zugangsdaten eintragen**
    In `config/config.php` `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS` sowie
@@ -40,6 +41,18 @@ speichern – der Zeitpunkt der Bestätigung wird in der Mitgliederliste als
 sind über diesen Link nicht änderbar, das bleibt dem Admin-Bereich
 vorbehalten. Bei Verdacht auf Missbrauch kann der Link im Admin-Bereich
 jederzeit neu generiert werden (der alte wird damit ungültig).
+
+## Auto-Migration
+
+`includes/migrate.php` prüft bei jedem Datenbank-Verbindungsaufbau
+(`includes/db.php`), ob alle benötigten Tabellen und Spalten existieren, und
+legt fehlende automatisch an (`CREATE TABLE IF NOT EXISTS` / `ALTER TABLE ...
+ADD COLUMN`). Bestehende Spalten/Daten werden dabei nie verändert oder
+gelöscht. Soll künftig ein neues Mitglieds-Feld hinzukommen, reicht es, es in
+`membersColumnDefinitions()` in `includes/migrate.php` zu ergänzen (plus im
+Formular in `admin/member_form.php` und `verify.php`) – die Spalte wird beim
+nächsten Seitenaufruf automatisch in der Datenbank angelegt, ganz ohne
+manuellen SQL-Import.
 
 ## Hinweise zum Betrieb
 

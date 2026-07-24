@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/migrate.php';
 
 function getDb(): PDO
 {
@@ -15,6 +16,7 @@ function getDb(): PDO
 
         try {
             $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
+            runMigrations($pdo);
         } catch (PDOException $e) {
             if (DEBUG) {
                 die('Datenbankverbindung fehlgeschlagen: ' . $e->getMessage());
