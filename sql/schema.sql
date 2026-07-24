@@ -1,10 +1,8 @@
 -- Schema für die Mitgliederverwaltung
 -- Zeichensatz: utf8mb4 (volle Unicode-/Emoji-Unterstützung)
-
-CREATE DATABASE IF NOT EXISTS `mitgliederverwaltung`
-  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-USE `mitgliederverwaltung`;
+--
+-- Wird direkt in die bereits vorhandene Datenbank importiert, z. B.:
+--   mysql -u mitglied -p mitglieddb < sql/schema.sql
 
 -- Administratoren (Login für den Verwaltungsbereich)
 CREATE TABLE IF NOT EXISTS `admins` (
