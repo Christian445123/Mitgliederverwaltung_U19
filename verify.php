@@ -158,8 +158,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $member['hosen_groesse'] = trim($_POST['hosen_groesse'] ?? '');
         $member['mesh_shorts_groesse'] = trim($_POST['mesh_shorts_groesse'] ?? '');
         $member['helm_groesse'] = trim($_POST['helm_groesse'] ?? '');
+        $member['helm_modell'] = trim($_POST['helm_modell'] ?? '');
         $member['tshirt_polo_groesse'] = trim($_POST['tshirt_polo_groesse'] ?? '');
         $member['hoodie_groesse'] = trim($_POST['hoodie_groesse'] ?? '');
+        $member['socken_groesse'] = trim($_POST['socken_groesse'] ?? '');
         $member['helm_vorhanden'] = in_array($_POST['helm_vorhanden'] ?? '', ['ja', 'nein'], true) ? $_POST['helm_vorhanden'] : null;
         $rechtePflichtenAkzeptiert = !empty($_POST['rechte_pflichten_akzeptiert']);
         $member['bild_einverstaendnis_akzeptiert_at'] = !empty($_POST['bild_einverstaendnis_akzeptiert'])
@@ -221,8 +223,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     reisepass_ausstellungsbehoerde = :reisepass_ausstellungsbehoerde,
                     sozialversicherungsnummer = :sozialversicherungsnummer,
                     essen = :essen, jersey_groesse = :jersey_groesse, hosen_groesse = :hosen_groesse,
-                    mesh_shorts_groesse = :mesh_shorts_groesse, helm_groesse = :helm_groesse,
+                    mesh_shorts_groesse = :mesh_shorts_groesse, helm_groesse = :helm_groesse, helm_modell = :helm_modell,
                     tshirt_polo_groesse = :tshirt_polo_groesse, hoodie_groesse = :hoodie_groesse,
+                    socken_groesse = :socken_groesse,
                     helm_vorhanden = :helm_vorhanden,
                     rechte_pflichten_akzeptiert_at = :rechte_pflichten_akzeptiert_at,
                     bild_einverstaendnis_akzeptiert_at = :bild_einverstaendnis_akzeptiert_at,'
@@ -259,8 +262,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'hosen_groesse' => $member['hosen_groesse'],
                 'mesh_shorts_groesse' => $member['mesh_shorts_groesse'],
                 'helm_groesse' => $member['helm_groesse'],
+                'helm_modell' => $member['helm_modell'],
                 'tshirt_polo_groesse' => $member['tshirt_polo_groesse'],
                 'hoodie_groesse' => $member['hoodie_groesse'],
+                'socken_groesse' => $member['socken_groesse'],
                 'helm_vorhanden' => $member['helm_vorhanden'],
                 'rechte_pflichten_akzeptiert_at' => $member['rechte_pflichten_akzeptiert_at'],
                 'bild_einverstaendnis_akzeptiert_at' => $member['bild_einverstaendnis_akzeptiert_at'],
@@ -454,6 +459,16 @@ require __DIR__ . '/includes/public_header.php';
                     <label for="helm_groesse">Helm Größe</label>
                     <input type="text" id="helm_groesse" name="helm_groesse" value="<?= e($member['helm_groesse']) ?>">
                 </div>
+                <div class="form-group">
+                    <label for="helm_modell">Helm verwendest du (Modell)</label>
+                    <input type="text" id="helm_modell" name="helm_modell" value="<?= e($member['helm_modell']) ?>" placeholder="z. B. Riddell Speedflex">
+                </div>
+                <div class="form-group">
+                    <label for="socken_groesse">Socken Größe</label>
+                    <input type="text" id="socken_groesse" name="socken_groesse" value="<?= e($member['socken_groesse']) ?>">
+                </div>
+            </div>
+            <div class="form-row">
                 <div class="form-group">
                     <label for="tshirt_polo_groesse">T-Shirt & Polo Größe (MACRON)</label>
                     <input type="text" id="tshirt_polo_groesse" name="tshirt_polo_groesse" value="<?= e($member['tshirt_polo_groesse']) ?>">

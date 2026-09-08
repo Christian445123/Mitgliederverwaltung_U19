@@ -223,13 +223,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         passnummer = :passnummer, name_laut_pass = :name_laut_pass,
                         allergien = :allergien, nada_kurs_datum = :nada_kurs_datum,
                         beitrittsdatum = :beitrittsdatum, status = :status,
-                        spielernummer = :spielernummer, bezirk = :bezirk, spielposition = :spielposition,
+                        spielernummer = :spielernummer, sz = :sz, bezirk = :bezirk, spielposition = :spielposition,
                         herkunftsverein = :herkunftsverein, koerpergroesse_cm = :koerpergroesse_cm,
                         gewicht_kg = :gewicht_kg,
+                        camp_1 = :camp_1, camp_2 = :camp_2, camp_spanien = :camp_spanien, camp_tschechien = :camp_tschechien,
                         nada_zertifikat_gueltig_bis = :nada_zertifikat_gueltig_bis,
                         nada_erlaubnis_gueltig_bis = :nada_erlaubnis_gueltig_bis,
                         rechte_pflichten_akzeptiert_at = :rechte_pflichten_akzeptiert_at,
                         bild_einverstaendnis_akzeptiert_at = :bild_einverstaendnis_akzeptiert_at,
+                        dokument_typ = :dokument_typ,
                         sozialversicherungsnummer = :sozialversicherungsnummer,
                         geburtsland = :geburtsland, geburtsort = :geburtsort,
                         reisepass_nr = :reisepass_nr, reisepass_ausgestellt_am = :reisepass_ausgestellt_am,
@@ -237,8 +239,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         reisepass_ausstellungsbehoerde = :reisepass_ausstellungsbehoerde,
                         pass_foto_pfad = :pass_foto_pfad,
                         essen = :essen, jersey_groesse = :jersey_groesse, hosen_groesse = :hosen_groesse,
-                        mesh_shorts_groesse = :mesh_shorts_groesse, helm_groesse = :helm_groesse,
+                        mesh_shorts_groesse = :mesh_shorts_groesse, helm_groesse = :helm_groesse, helm_modell = :helm_modell,
                         tshirt_polo_groesse = :tshirt_polo_groesse, hoodie_groesse = :hoodie_groesse,
+                        socken_groesse = :socken_groesse,
                         helm_vorhanden = :helm_vorhanden
                         WHERE id = :id';
                 $pdo->prepare($sql)->execute($params);
@@ -257,25 +260,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                          erziehungsberechtigter, erziehungsberechtigter_email, erziehungsberechtigter_telefon,
                          passnummer, name_laut_pass, allergien, nada_kurs_datum,
                          beitrittsdatum, status, verify_token, access_password_hash,
-                         spielernummer, bezirk, spielposition, herkunftsverein, koerpergroesse_cm, gewicht_kg,
+                         spielernummer, sz, bezirk, spielposition, herkunftsverein, koerpergroesse_cm, gewicht_kg,
+                         camp_1, camp_2, camp_spanien, camp_tschechien,
                          nada_zertifikat_gueltig_bis, nada_erlaubnis_gueltig_bis,
-                         rechte_pflichten_akzeptiert_at, bild_einverstaendnis_akzeptiert_at,
+                         rechte_pflichten_akzeptiert_at, bild_einverstaendnis_akzeptiert_at, dokument_typ,
                          sozialversicherungsnummer, geburtsland, geburtsort,
                          reisepass_nr, reisepass_ausgestellt_am, reisepass_gueltig_bis, reisepass_ausstellungsbehoerde,
-                         pass_foto_pfad, essen, jersey_groesse, hosen_groesse, mesh_shorts_groesse, helm_groesse,
-                         tshirt_polo_groesse, hoodie_groesse, helm_vorhanden)
+                         pass_foto_pfad, essen, jersey_groesse, hosen_groesse, mesh_shorts_groesse, helm_groesse, helm_modell,
+                         tshirt_polo_groesse, hoodie_groesse, socken_groesse, helm_vorhanden)
                         VALUES
                         (:mitgliedsnummer, :vorname, :nachname, :geburtsdatum, :strasse, :plz, :ort, :email, :telefon,
                          :erziehungsberechtigter, :erziehungsberechtigter_email, :erziehungsberechtigter_telefon,
                          :passnummer, :name_laut_pass, :allergien, :nada_kurs_datum,
                          :beitrittsdatum, :status, :verify_token, :access_password_hash,
-                         :spielernummer, :bezirk, :spielposition, :herkunftsverein, :koerpergroesse_cm, :gewicht_kg,
+                         :spielernummer, :sz, :bezirk, :spielposition, :herkunftsverein, :koerpergroesse_cm, :gewicht_kg,
+                         :camp_1, :camp_2, :camp_spanien, :camp_tschechien,
                          :nada_zertifikat_gueltig_bis, :nada_erlaubnis_gueltig_bis,
-                         :rechte_pflichten_akzeptiert_at, :bild_einverstaendnis_akzeptiert_at,
+                         :rechte_pflichten_akzeptiert_at, :bild_einverstaendnis_akzeptiert_at, :dokument_typ,
                          :sozialversicherungsnummer, :geburtsland, :geburtsort,
                          :reisepass_nr, :reisepass_ausgestellt_am, :reisepass_gueltig_bis, :reisepass_ausstellungsbehoerde,
-                         :pass_foto_pfad, :essen, :jersey_groesse, :hosen_groesse, :mesh_shorts_groesse, :helm_groesse,
-                         :tshirt_polo_groesse, :hoodie_groesse, :helm_vorhanden)';
+                         :pass_foto_pfad, :essen, :jersey_groesse, :hosen_groesse, :mesh_shorts_groesse, :helm_groesse, :helm_modell,
+                         :tshirt_polo_groesse, :hoodie_groesse, :socken_groesse, :helm_vorhanden)';
                 $pdo->prepare($sql)->execute($params);
                 $newId = (int) $pdo->lastInsertId();
 
@@ -428,21 +433,47 @@ function expiryBadge(string $status, array $colors, array $labels): string
         <legend>Team & Spielbetrieb</legend>
         <div class="form-row">
             <div class="form-group form-group-small">
-                <label for="spielernummer">Spieler-Nr. (SZ)</label>
+                <label for="spielernummer">Jersey-Nr.</label>
                 <input type="text" id="spielernummer" name="spielernummer" value="<?= e($member['spielernummer']) ?>">
+            </div>
+            <div class="form-group form-group-small">
+                <label for="sz">SZ</label>
+                <input type="text" id="sz" name="sz" value="<?= e($member['sz']) ?>">
+            </div>
+            <div class="form-group form-group-small">
+                <label for="bezirk">Bez.</label>
+                <input type="text" id="bezirk" name="bezirk" value="<?= e($member['bezirk']) ?>">
             </div>
             <div class="form-group">
                 <label for="position">Position</label>
                 <input type="text" id="position" name="position" value="<?= e($member['spielposition']) ?>">
             </div>
-            <div class="form-group">
-                <label for="bezirk">Bezirk</label>
-                <input type="text" id="bezirk" name="bezirk" value="<?= e($member['bezirk']) ?>">
-            </div>
         </div>
         <div class="form-group">
             <label for="herkunftsverein">Herkunftsverein</label>
             <input type="text" id="herkunftsverein" name="herkunftsverein" value="<?= e($member['herkunftsverein']) ?>">
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Camp-/Turnier-Teilnahmen</legend>
+        <div class="form-row">
+            <div class="form-group form-group-small">
+                <label for="camp_1">Camp 1</label>
+                <input type="text" id="camp_1" name="camp_1" value="<?= e($member['camp_1']) ?>" placeholder="X">
+            </div>
+            <div class="form-group form-group-small">
+                <label for="camp_2">Camp 2</label>
+                <input type="text" id="camp_2" name="camp_2" value="<?= e($member['camp_2']) ?>" placeholder="X">
+            </div>
+            <div class="form-group form-group-small">
+                <label for="camp_spanien">Spanien</label>
+                <input type="text" id="camp_spanien" name="camp_spanien" value="<?= e($member['camp_spanien']) ?>" placeholder="X">
+            </div>
+            <div class="form-group form-group-small">
+                <label for="camp_tschechien">Tschechien</label>
+                <input type="text" id="camp_tschechien" name="camp_tschechien" value="<?= e($member['camp_tschechien']) ?>" placeholder="X">
+            </div>
         </div>
     </fieldset>
 
@@ -467,6 +498,10 @@ function expiryBadge(string $status, array $colors, array $labels): string
     <fieldset>
         <legend>Reisedokumente</legend>
         <div class="form-row">
+            <div class="form-group">
+                <label for="dokument_typ">Ausweistyp (Bild E-Card)</label>
+                <input type="text" id="dokument_typ" name="dokument_typ" value="<?= e($member['dokument_typ']) ?>" placeholder="z. B. ECard, Personalausweis">
+            </div>
             <div class="form-group">
                 <label for="passnummer">Sport-Passnummer</label>
                 <input type="text" id="passnummer" name="passnummer" value="<?= e($member['passnummer']) ?>">
@@ -541,6 +576,16 @@ function expiryBadge(string $status, array $colors, array $labels): string
                 <input type="text" id="helm_groesse" name="helm_groesse" value="<?= e($member['helm_groesse']) ?>">
             </div>
             <div class="form-group">
+                <label for="helm_modell">Helm verwendest du (Modell)</label>
+                <input type="text" id="helm_modell" name="helm_modell" value="<?= e($member['helm_modell']) ?>" placeholder="z. B. Riddell Speedflex">
+            </div>
+            <div class="form-group">
+                <label for="socken_groesse">Socken Größe</label>
+                <input type="text" id="socken_groesse" name="socken_groesse" value="<?= e($member['socken_groesse']) ?>">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
                 <label for="tshirt_polo_groesse">T-Shirt & Polo Größe (MACRON)</label>
                 <input type="text" id="tshirt_polo_groesse" name="tshirt_polo_groesse" value="<?= e($member['tshirt_polo_groesse']) ?>">
             </div>
@@ -548,14 +593,14 @@ function expiryBadge(string $status, array $colors, array $labels): string
                 <label for="hoodie_groesse">Hoodie Größe (MACRON)</label>
                 <input type="text" id="hoodie_groesse" name="hoodie_groesse" value="<?= e($member['hoodie_groesse']) ?>">
             </div>
-        </div>
-        <div class="form-group">
-            <label for="helm_vorhanden">Helm vorhanden</label>
-            <select id="helm_vorhanden" name="helm_vorhanden">
-                <option value="">– bitte wählen –</option>
-                <option value="ja" <?= $member['helm_vorhanden'] === 'ja' ? 'selected' : '' ?>>Ja</option>
-                <option value="nein" <?= $member['helm_vorhanden'] === 'nein' ? 'selected' : '' ?>>Nein</option>
-            </select>
+            <div class="form-group">
+                <label for="helm_vorhanden">Helm vorhanden</label>
+                <select id="helm_vorhanden" name="helm_vorhanden">
+                    <option value="">– bitte wählen –</option>
+                    <option value="ja" <?= $member['helm_vorhanden'] === 'ja' ? 'selected' : '' ?>>Ja</option>
+                    <option value="nein" <?= $member['helm_vorhanden'] === 'nein' ? 'selected' : '' ?>>Nein</option>
+                </select>
+            </div>
         </div>
     </fieldset>
 
