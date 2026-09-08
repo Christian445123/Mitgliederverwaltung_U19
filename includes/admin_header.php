@@ -20,6 +20,7 @@
                 <a href="index.php">Mitglieder</a>
                 <?php if (isAdministrator()): ?>
                     <a href="users.php">Benutzer</a>
+                    <a href="update.php">Update</a>
                 <?php endif; ?>
             </nav>
         </div>

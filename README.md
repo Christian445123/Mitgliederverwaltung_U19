@@ -179,16 +179,27 @@ Neben den Basisdaten erfasst die Anwendung noch:
 
 ## Anwendung aktualisieren (Deployment)
 
-Läuft die Anwendung auf dem Server als Git-Checkout, aktualisiert
-```
-php bin/update.php
-```
-den Code per `git pull --ff-only` und stößt danach sofort die
-Datenbank-Migration an (statt bis zum nächsten Seitenaufruf zu warten). Das
-Script bricht **ab, ohne etwas zu verändern**, falls es auf dem Server nicht
-committete lokale Änderungen findet (Schutz vor versehentlichem Datenverlust)
-oder falls `git pull` wegen divergierter Historie nicht als reines
-Fast-Forward möglich ist.
+Läuft die Anwendung auf dem Server als Git-Checkout, gibt es zwei Wege, den
+neuesten Code zu ziehen - beide nutzen dieselbe Logik (`includes/updater.php`):
+
+- **Button im Admin-Bereich** (nur für Administratoren sichtbar): „Update“ in
+  der Navigation → `admin/update.php` → „Jetzt aktualisieren (git pull)“.
+  Zeigt den Ablauf inkl. Git-Ausgabe direkt im Browser an. Voraussetzung:
+  `proc_open()` darf auf dem Server für PHP-Webanfragen nicht deaktiviert sein
+  (bei manchen Hostern ist das aus Sicherheitsgründen nur für die
+  Kommandozeile erlaubt - dann bricht der Button mit einer entsprechenden
+  Meldung ab, und man nutzt stattdessen die Kommandozeile).
+- **Kommandozeile** (funktioniert immer, auch wenn `proc_open()` im Web
+  gesperrt ist):
+  ```
+  php bin/update.php
+  ```
+
+Beide Wege ziehen den Code per `git pull --ff-only` und stoßen danach sofort
+die Datenbank-Migration an. Es wird **abgebrochen, ohne etwas zu verändern**,
+falls es auf dem Server nicht committete lokale Änderungen gibt (Schutz vor
+versehentlichem Datenverlust) oder falls `git pull` wegen divergierter
+Historie nicht als reines Fast-Forward möglich ist.
 
 ## Notfall-Zugang ohne Datenbank
 
