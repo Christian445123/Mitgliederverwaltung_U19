@@ -80,22 +80,30 @@ function membersColumnDefinitions(): array
         'verify_locked_until'              => "DATETIME NULL",
 
         // --- Team & Spielbetrieb (nur Admin) ---------------------------
-        'spielernummer'                    => "VARCHAR(10) NULL",
-        'bezirk'                           => "VARCHAR(100) NULL",
+        'spielernummer'                    => "VARCHAR(10) NULL", // "Jersy Nr." im Original-Sheet
+        'sz'                               => "VARCHAR(10) NULL", // Spalte "SZ" (Markierung, meist "X")
+        'bezirk'                           => "VARCHAR(100) NULL", // Spalte "Bez."
         'spielposition'                    => "VARCHAR(50) NULL",
         'herkunftsverein'                  => "VARCHAR(150) NULL",
         'koerpergroesse_cm'                => "SMALLINT UNSIGNED NULL",
         'gewicht_kg'                       => "SMALLINT UNSIGNED NULL",
 
+        // --- Camp-/Turnier-Teilnahmen (nur Admin) ------------------------
+        'camp_1'                           => "VARCHAR(10) NULL",
+        'camp_2'                           => "VARCHAR(10) NULL",
+        'camp_spanien'                     => "VARCHAR(10) NULL",
+        'camp_tschechien'                  => "VARCHAR(10) NULL",
+
         // --- Zertifikate (nur Admin) ------------------------------------
-        'nada_zertifikat_gueltig_bis'      => "DATE NULL",
-        'nada_erlaubnis_gueltig_bis'       => "DATE NULL",
+        'nada_zertifikat_gueltig_bis'      => "DATE NULL", // Spalte "Nada gültig bis"
+        'nada_erlaubnis_gueltig_bis'       => "DATE NULL", // im Original-Sheet nicht vorhanden, bleibt optional nutzbar
 
         // --- Einwilligungen (mit Zeitstempel als Nachweis) ---------------
         'rechte_pflichten_akzeptiert_at'   => "DATETIME NULL",
         'bild_einverstaendnis_akzeptiert_at' => "DATETIME NULL",
 
-        // --- Sozialversicherung (sensibel - im UI maskiert dargestellt) --
+        // --- Ausweis/Dokumente & Sozialversicherung ------------------------
+        'dokument_typ'                     => "VARCHAR(50) NULL", // Spalte "Bild E-Card" (z. B. "ECard", "Personalausweis")
         'sozialversicherungsnummer'        => "VARCHAR(20) NULL",
 
         // --- Reisedokumente ----------------------------------------------
@@ -113,9 +121,11 @@ function membersColumnDefinitions(): array
         'hosen_groesse'                    => "VARCHAR(10) NULL",
         'mesh_shorts_groesse'              => "VARCHAR(10) NULL",
         'helm_groesse'                     => "VARCHAR(10) NULL",
+        'helm_modell'                      => "VARCHAR(100) NULL", // Spalte "Helm verwendest du" (z. B. "Riddell Speedflex")
         'tshirt_polo_groesse'              => "VARCHAR(10) NULL",
         'hoodie_groesse'                   => "VARCHAR(10) NULL",
-        'helm_vorhanden'                   => "ENUM('ja','nein') NULL",
+        'socken_groesse'                   => "VARCHAR(10) NULL",
+        'helm_vorhanden'                   => "ENUM('ja','nein') NULL", // im Original-Sheet nicht vorhanden, bleibt optional nutzbar
     ];
 }
 

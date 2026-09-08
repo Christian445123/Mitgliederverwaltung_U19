@@ -41,22 +41,30 @@ function importableMemberFields(): array
             'erziehungsberechtigter_telefon' => 'Telefon',
         ],
         'Team & Spielbetrieb' => [
-            'spielernummer' => 'Spieler-Nr. (SZ)',
-            'bezirk' => 'Bezirk',
+            'spielernummer' => 'Jersey-Nr.',
+            'sz' => 'SZ',
+            'bezirk' => 'Bez.',
             'spielposition' => 'Position',
             'herkunftsverein' => 'Verein',
             'beitrittsdatum' => 'Beitrittsdatum (Datum)',
         ],
-        'Zertifikate' => [
-            'nada_kurs_datum' => 'NADA-Kurs absolviert am (Datum)',
-            'nada_zertifikat_gueltig_bis' => 'NADA-Zertifikat gültig bis (Datum)',
-            'nada_erlaubnis_gueltig_bis' => 'NADA-Erlaubnis gültig bis (Datum)',
+        'Camp-/Turnier-Teilnahmen' => [
+            'camp_1' => 'Camp 1',
+            'camp_2' => 'Camp 2',
+            'camp_spanien' => 'Spanien',
+            'camp_tschechien' => 'Tschechien',
         ],
-        'Reisedokumente' => [
-            'sozialversicherungsnummer' => 'Sozialversicherungsnummer',
+        'Zertifikate & Einwilligungen' => [
+            'nada_kurs_datum' => 'NADA-Kurs absolviert am (Datum)',
+            'nada_zertifikat_gueltig_bis' => 'Nada gültig bis (Datum)',
+            'rechte_pflichten_akzeptiert_at' => 'Rechte + Pflichten (akzeptiert, falls Zelle ausgefüllt)',
+        ],
+        'Ausweis & Reisedokumente' => [
+            'dokument_typ' => 'Bild E-Card (Ausweistyp)',
+            'sozialversicherungsnummer' => 'Sozial Ver. Nr.',
             'passnummer' => 'Sport-Passnummer',
             'name_laut_pass' => 'Name laut Pass',
-            'reisepass_nr' => 'Reisepass-Nr.',
+            'reisepass_nr' => 'Reisepass Nr',
             'reisepass_ausgestellt_am' => 'Reisepass ausgestellt am (Datum)',
             'reisepass_gueltig_bis' => 'Reisepass gültig bis (Datum)',
             'reisepass_ausstellungsbehoerde' => 'Ausstellungsbehörde',
@@ -64,13 +72,14 @@ function importableMemberFields(): array
         'Verpflegung & Ausrüstung' => [
             'allergien' => 'Allergien',
             'essen' => 'Essen (Ernährung)',
-            'jersey_groesse' => 'Jersey Größe',
-            'hosen_groesse' => 'Hosen Größe',
-            'mesh_shorts_groesse' => 'Mesh Shorts Größe',
-            'helm_groesse' => 'Helm Größe',
-            'tshirt_polo_groesse' => 'T-Shirt/Polo Größe',
-            'hoodie_groesse' => 'Hoodie Größe',
-            'helm_vorhanden' => 'Helm vorhanden (ja/nein)',
+            'jersey_groesse' => 'Game Jersey Grösse',
+            'hosen_groesse' => 'Game Hosen Grösse',
+            'mesh_shorts_groesse' => 'Mesh Shorts Grösse',
+            'helm_groesse' => 'Helm Grösse',
+            'helm_modell' => 'Helm verwendest du (Modell)',
+            'tshirt_polo_groesse' => 'T-Shirt & Polo Grösse',
+            'hoodie_groesse' => 'Hoodie Grösse',
+            'socken_groesse' => 'Socken Grösse',
         ],
     ];
 }
@@ -111,11 +120,71 @@ function detectDelimiter(string $line): string
     return $candidates[$best] > 0 ? $best : ',';
 }
 
-/** Schlägt anhand eines Spaltentitels ein passendes Ziel-Feld vor (grobe Stichwortsuche). */
+/**
+ * Schlägt anhand eines Spaltentitels ein passendes Ziel-Feld vor.
+ * Erst exakter Abgleich mit den bekannten Original-Spaltennamen (AFBÖ-Sheet),
+ * danach eine grobe Stichwortsuche als Fallback für abweichende Exporte.
+ */
 function guessFieldFromHeader(string $header): ?string
 {
     $h = mb_strtolower(trim($header));
-    $map = [
+
+    // Exakte Spaltennamen aus dem Original-Excel-Sheet
+    $exact = [
+        'jersy nr.' => 'spielernummer',
+        'jersey nr.' => 'spielernummer',
+        'camp 1' => 'camp_1',
+        'camp 2' => 'camp_2',
+        'spanien' => 'camp_spanien',
+        'tschechien' => 'camp_tschechien',
+        'nachname' => 'nachname',
+        'vorname' => 'vorname',
+        'name& vorname' => null, // nur berechnete Anzeige-Spalte, keine eigenen Daten
+        'sz' => 'sz',
+        'bez.' => 'bezirk',
+        'position' => 'spielposition',
+        'geburts-datum' => 'geburtsdatum',
+        'geburtsdatum' => 'geburtsdatum',
+        'verein' => 'herkunftsverein',
+        'cm' => 'koerpergroesse_cm',
+        'kg' => 'gewicht_kg',
+        'telfon' => 'telefon',
+        'telefon' => 'telefon',
+        'mail' => 'email',
+        'name erziehungsberechtigter' => 'erziehungsberechtigter',
+        'telefon erzieh' => 'erziehungsberechtigter_telefon',
+        'mail erzieh' => 'erziehungsberechtigter_email',
+        'rechte + pflichten' => 'rechte_pflichten_akzeptiert_at',
+        'bild e-card' => 'dokument_typ',
+        'sozial ver. nr.' => 'sozialversicherungsnummer',
+        'nada zertifikat' => null, // nur Label-Spalte ("NADA"), kein eigenes Feld
+        'nada gültig bis' => 'nada_zertifikat_gueltig_bis',
+        'pass foto' => null, // nur Label-Spalte ("Pass"), kein eigenes Feld
+        'reisepass nr' => 'reisepass_nr',
+        'reisepass ausgestellt am' => 'reisepass_ausgestellt_am',
+        'reisepass gültig bis' => 'reisepass_gueltig_bis',
+        'geburtsland' => 'geburtsland',
+        'geburtsort' => 'geburtsort',
+        'ausstellungsbehörde' => 'reisepass_ausstellungsbehoerde',
+        'plz' => 'plz',
+        'ort' => 'ort',
+        'straße' => 'strasse',
+        'essen' => 'essen',
+        'game jersey grösse (macron)' => 'jersey_groesse',
+        'game hosen grösse (macron)' => 'hosen_groesse',
+        'helm grösse' => 'helm_groesse',
+        'helm verwendest du' => 'helm_modell',
+        't-shirt & polo grösse (macron)' => 'tshirt_polo_groesse',
+        'hoodie grösse (macron)' => 'hoodie_groesse',
+        'mesh shorts grösse (macron)' => 'mesh_shorts_groesse',
+        'socken grösse' => 'socken_groesse',
+    ];
+    if (array_key_exists($h, $exact)) {
+        return $exact[$h];
+    }
+
+    // Grobe Stichwortsuche als Fallback (z. B. bei leicht abweichenden Exporten)
+    $fuzzy = [
         'nachname' => 'nachname',
         'vorname' => 'vorname',
         'geburtsdatum' => 'geburtsdatum',
@@ -123,7 +192,6 @@ function guessFieldFromHeader(string $header): ?string
         'geburtsort' => 'geburtsort',
         'verein' => 'herkunftsverein',
         'position' => 'spielposition',
-        'bezirk' => 'bezirk',
         'mail erzie' => 'erziehungsberechtigter_email',
         'telefon erzie' => 'erziehungsberechtigter_telefon',
         'erziehungsberechtigter' => 'erziehungsberechtigter',
@@ -131,13 +199,10 @@ function guessFieldFromHeader(string $header): ?string
         'e-mail' => 'email',
         'telefon' => 'telefon',
         'plz' => 'plz',
-        'ort' => 'ort',
         'straße' => 'strasse',
         'strasse' => 'strasse',
         'allergi' => 'allergien',
         'essen' => 'essen',
-        'nada zertifikat' => 'nada_zertifikat_gueltig_bis',
-        'nada erlaubnis' => 'nada_erlaubnis_gueltig_bis',
         'nada' => 'nada_kurs_datum',
         'sozialversicherung' => 'sozialversicherungsnummer',
         'reisepass nr' => 'reisepass_nr',
@@ -149,18 +214,17 @@ function guessFieldFromHeader(string $header): ?string
         'jersey' => 'jersey_groesse',
         'hosen' => 'hosen_groesse',
         'shorts' => 'mesh_shorts_groesse',
+        'socken' => 'socken_groesse',
+        'helm verwendest' => 'helm_modell',
         'helm größe' => 'helm_groesse',
-        'helm vorhanden' => 'helm_vorhanden',
+        'helm grösse' => 'helm_groesse',
         'helm' => 'helm_groesse',
         't-shirt' => 'tshirt_polo_groesse',
         'polo' => 'tshirt_polo_groesse',
         'hoodie' => 'hoodie_groesse',
-        'cm' => 'koerpergroesse_cm',
-        'kg' => 'gewicht_kg',
-        'sz' => 'spielernummer',
         'beitritt' => 'beitrittsdatum',
     ];
-    foreach ($map as $needle => $field) {
+    foreach ($fuzzy as $needle => $field) {
         if (str_contains($h, $needle)) {
             return $field;
         }
@@ -292,6 +356,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$errors && $step === 'import') {
                         }
                         $value = $parsed;
                     }
+                } elseif ($dbField === 'rechte_pflichten_akzeptiert_at') {
+                    // Spalte enthält Text wie "Pflicht" statt eines Datums - jede
+                    // ausgefüllte Zelle zählt als Einwilligung, Zeitpunkt = Import.
+                    $value = $value !== '' ? date('Y-m-d H:i:s') : null;
                 }
                 $member[$dbField] = $value;
             }

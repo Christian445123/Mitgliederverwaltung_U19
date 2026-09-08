@@ -18,16 +18,19 @@ $member = [
     'erziehungsberechtigter' => '', 'erziehungsberechtigter_email' => '', 'erziehungsberechtigter_telefon' => '',
     'passnummer' => '', 'name_laut_pass' => '', 'allergien' => '', 'nada_kurs_datum' => '',
     'beitrittsdatum' => date('Y-m-d'), 'status' => 'aktiv',
-    'spielernummer' => '', 'bezirk' => '', 'spielposition' => '', 'herkunftsverein' => '',
+    'spielernummer' => '', 'sz' => '', 'bezirk' => '', 'spielposition' => '', 'herkunftsverein' => '',
     'koerpergroesse_cm' => '', 'gewicht_kg' => '',
+    'camp_1' => '', 'camp_2' => '', 'camp_spanien' => '', 'camp_tschechien' => '',
     'nada_zertifikat_gueltig_bis' => '', 'nada_erlaubnis_gueltig_bis' => '',
     'rechte_pflichten_akzeptiert_at' => null, 'bild_einverstaendnis_akzeptiert_at' => null,
+    'dokument_typ' => '',
     'sozialversicherungsnummer' => '',
     'geburtsland' => '', 'geburtsort' => '',
     'reisepass_nr' => '', 'reisepass_ausgestellt_am' => '', 'reisepass_gueltig_bis' => '', 'reisepass_ausstellungsbehoerde' => '',
     'pass_foto_pfad' => null,
     'essen' => '', 'jersey_groesse' => '', 'hosen_groesse' => '', 'mesh_shorts_groesse' => '',
-    'helm_groesse' => '', 'tshirt_polo_groesse' => '', 'hoodie_groesse' => '', 'helm_vorhanden' => '',
+    'helm_groesse' => '', 'helm_modell' => '', 'tshirt_polo_groesse' => '', 'hoodie_groesse' => '',
+    'socken_groesse' => '', 'helm_vorhanden' => '',
 ];
 
 if ($isEdit) {
@@ -66,13 +69,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $member['status'] = ($_POST['status'] ?? 'aktiv') === 'inaktiv' ? 'inaktiv' : 'aktiv';
 
         $member['spielernummer'] = trim($_POST['spielernummer'] ?? '');
+        $member['sz'] = trim($_POST['sz'] ?? '');
         $member['bezirk'] = trim($_POST['bezirk'] ?? '');
         $member['spielposition'] = trim($_POST['position'] ?? '');
         $member['herkunftsverein'] = trim($_POST['herkunftsverein'] ?? '');
         $member['koerpergroesse_cm'] = trim($_POST['koerpergroesse_cm'] ?? '');
         $member['gewicht_kg'] = trim($_POST['gewicht_kg'] ?? '');
+        $member['camp_1'] = trim($_POST['camp_1'] ?? '');
+        $member['camp_2'] = trim($_POST['camp_2'] ?? '');
+        $member['camp_spanien'] = trim($_POST['camp_spanien'] ?? '');
+        $member['camp_tschechien'] = trim($_POST['camp_tschechien'] ?? '');
         $member['nada_zertifikat_gueltig_bis'] = trim($_POST['nada_zertifikat_gueltig_bis'] ?? '');
         $member['nada_erlaubnis_gueltig_bis'] = trim($_POST['nada_erlaubnis_gueltig_bis'] ?? '');
+        $member['dokument_typ'] = trim($_POST['dokument_typ'] ?? '');
         $member['geburtsland'] = trim($_POST['geburtsland'] ?? '');
         $member['geburtsort'] = trim($_POST['geburtsort'] ?? '');
         $member['reisepass_nr'] = trim($_POST['reisepass_nr'] ?? '');
@@ -84,8 +93,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $member['hosen_groesse'] = trim($_POST['hosen_groesse'] ?? '');
         $member['mesh_shorts_groesse'] = trim($_POST['mesh_shorts_groesse'] ?? '');
         $member['helm_groesse'] = trim($_POST['helm_groesse'] ?? '');
+        $member['helm_modell'] = trim($_POST['helm_modell'] ?? '');
         $member['tshirt_polo_groesse'] = trim($_POST['tshirt_polo_groesse'] ?? '');
         $member['hoodie_groesse'] = trim($_POST['hoodie_groesse'] ?? '');
+        $member['socken_groesse'] = trim($_POST['socken_groesse'] ?? '');
         $member['helm_vorhanden'] = in_array($_POST['helm_vorhanden'] ?? '', ['ja', 'nein'], true) ? $_POST['helm_vorhanden'] : null;
 
         // SVNR: Feld bleibt maskiert, nur bei expliziter Neueingabe wird der Wert geändert.
@@ -161,15 +172,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'beitrittsdatum' => $member['beitrittsdatum'] ?: null,
                 'status' => $member['status'],
                 'spielernummer' => $member['spielernummer'],
+                'sz' => $member['sz'],
                 'bezirk' => $member['bezirk'],
                 'spielposition' => $member['spielposition'],
                 'herkunftsverein' => $member['herkunftsverein'],
                 'koerpergroesse_cm' => $member['koerpergroesse_cm'] !== '' ? (int) $member['koerpergroesse_cm'] : null,
                 'gewicht_kg' => $member['gewicht_kg'] !== '' ? (int) $member['gewicht_kg'] : null,
+                'camp_1' => $member['camp_1'],
+                'camp_2' => $member['camp_2'],
+                'camp_spanien' => $member['camp_spanien'],
+                'camp_tschechien' => $member['camp_tschechien'],
                 'nada_zertifikat_gueltig_bis' => $member['nada_zertifikat_gueltig_bis'] ?: null,
                 'nada_erlaubnis_gueltig_bis' => $member['nada_erlaubnis_gueltig_bis'] ?: null,
                 'rechte_pflichten_akzeptiert_at' => $member['rechte_pflichten_akzeptiert_at'],
                 'bild_einverstaendnis_akzeptiert_at' => $member['bild_einverstaendnis_akzeptiert_at'],
+                'dokument_typ' => $member['dokument_typ'],
                 'sozialversicherungsnummer' => $member['sozialversicherungsnummer'],
                 'geburtsland' => $member['geburtsland'],
                 'geburtsort' => $member['geburtsort'],
@@ -182,8 +199,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'hosen_groesse' => $member['hosen_groesse'],
                 'mesh_shorts_groesse' => $member['mesh_shorts_groesse'],
                 'helm_groesse' => $member['helm_groesse'],
+                'helm_modell' => $member['helm_modell'],
                 'tshirt_polo_groesse' => $member['tshirt_polo_groesse'],
                 'hoodie_groesse' => $member['hoodie_groesse'],
+                'socken_groesse' => $member['socken_groesse'],
                 'helm_vorhanden' => $member['helm_vorhanden'],
             ];
 
