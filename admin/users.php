@@ -56,7 +56,7 @@ require __DIR__ . '/../includes/admin_header.php';
                 <a href="user_form.php?id=<?= (int) $u['id'] ?>">Bearbeiten</a>
                 <?php if ((int) $u['id'] !== currentAdminId()): ?>
                     <form method="post" action="user_delete.php" class="inline-form"
-                          onsubmit="return confirm('Benutzer &quot;<?= e($u['username']) ?>&quot; wirklich löschen?');">
+                          data-confirm="Benutzer &quot;<?= e($u['username']) ?>&quot; wirklich löschen?">
                         <?= csrfField() ?>
                         <input type="hidden" name="id" value="<?= (int) $u['id'] ?>">
                         <button type="submit" class="link-button danger">Löschen</button>

@@ -1,5 +1,17 @@
 <?php
 
+/** Setzt grundlegende Sicherheits-Header (Schutz u. a. vor Clickjacking/MIME-Sniffing). */
+function sendSecurityHeaders(): void
+{
+    if (headers_sent()) {
+        return;
+    }
+    header('X-Content-Type-Options: nosniff');
+    header('X-Frame-Options: DENY');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+    header("Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none'");
+}
+
 /** HTML-sicher ausgeben */
 function e(?string $value): string
 {

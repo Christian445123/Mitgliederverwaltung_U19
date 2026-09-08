@@ -63,16 +63,16 @@ Daten prüfen und bei Bedarf korrigieren kann. Zum Öffnen der Daten benötigt
 das Mitglied zusätzlich seine E-Mail-Adresse und den Zugangscode:</p>
 
 <div class="link-box">
-    <input type="text" readonly value="<?= e($link) ?>" id="verifyLink" onclick="this.select();">
-    <button type="button" class="btn" onclick="navigator.clipboard.writeText(document.getElementById('verifyLink').value); this.textContent='Kopiert!';">Kopieren</button>
+    <input type="text" readonly value="<?= e($link) ?>" id="verifyLink" data-select-on-click>
+    <button type="button" class="btn" data-copy-target="verifyLink">Kopieren</button>
 </div>
 
 <?php if ($generatedPassword): ?>
     <div class="alert alert-warning">
         <p><strong>Zugangscode (wird aus Sicherheitsgründen nur jetzt einmalig angezeigt):</strong></p>
         <div class="link-box">
-            <input type="text" readonly value="<?= e($generatedPassword) ?>" id="accessPassword" onclick="this.select();">
-            <button type="button" class="btn" onclick="navigator.clipboard.writeText(document.getElementById('accessPassword').value); this.textContent='Kopiert!';">Kopieren</button>
+            <input type="text" readonly value="<?= e($generatedPassword) ?>" id="accessPassword" data-select-on-click>
+            <button type="button" class="btn" data-copy-target="accessPassword">Kopieren</button>
         </div>
         <p>Bitte <strong>getrennt vom Link</strong> übermitteln (z. B. telefonisch oder per SMS statt
         derselben E-Mail) – nur so bringt der Zugangscode zusätzlichen Schutz. Er wird nirgends im
@@ -100,14 +100,14 @@ das Mitglied zusätzlich seine E-Mail-Adresse und den Zugangscode:</p>
 <?php endif; ?>
 
 <form method="post" action="member_link.php?id=<?= (int) $id ?>"
-      onsubmit="return confirm('Neuen Link erzeugen? Der alte Link funktioniert danach nicht mehr.');">
+      data-confirm="Neuen Link erzeugen? Der alte Link funktioniert danach nicht mehr.">
     <?= csrfField() ?>
     <input type="hidden" name="action" value="regenerate">
     <button type="submit" class="btn btn-secondary">Neuen Link erzeugen (alten ungültig machen)</button>
 </form>
 
 <form method="post" action="member_link.php?id=<?= (int) $id ?>"
-      onsubmit="return confirm('Neuen Zugangscode generieren? Der alte Code funktioniert danach nicht mehr.');">
+      data-confirm="Neuen Zugangscode generieren? Der alte Code funktioniert danach nicht mehr.">
     <?= csrfField() ?>
     <input type="hidden" name="action" value="regenerate_password">
     <button type="submit" class="btn btn-secondary">Neuen Zugangscode generieren</button>

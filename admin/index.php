@@ -101,7 +101,7 @@ require __DIR__ . '/../includes/admin_header.php';
                 <a href="member_form.php?id=<?= (int) $m['id'] ?>">Bearbeiten</a>
                 <a href="member_link.php?id=<?= (int) $m['id'] ?>">Link</a>
                 <form method="post" action="member_delete.php" class="inline-form"
-                      onsubmit="return confirm('Mitglied &quot;<?= e($m['vorname'] . ' ' . $m['nachname']) ?>&quot; wirklich löschen?');">
+                      data-confirm="Mitglied &quot;<?= e($m['vorname'] . ' ' . $m['nachname']) ?>&quot; wirklich löschen?">
                     <?= csrfField() ?>
                     <input type="hidden" name="id" value="<?= (int) $m['id'] ?>">
                     <button type="submit" class="link-button danger">Löschen</button>

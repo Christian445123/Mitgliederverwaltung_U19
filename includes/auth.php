@@ -4,6 +4,8 @@ require_once __DIR__ . '/functions.php';
 
 function startSecureSession(): void
 {
+    sendSecurityHeaders();
+
     if (session_status() === PHP_SESSION_ACTIVE) {
         return;
     }

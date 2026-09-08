@@ -46,6 +46,8 @@ function adminsColumnDefinitions(): array
         // Konten beim Update nicht versehentlich ihren Zugriff verlieren.
         'role'          => "ENUM('administrator','bearbeiter') NOT NULL DEFAULT 'administrator'",
         'created_at'    => "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
+        'failed_login_attempts' => "INT UNSIGNED NOT NULL DEFAULT 0",
+        'login_locked_until'    => "DATETIME NULL",
     ];
 }
 

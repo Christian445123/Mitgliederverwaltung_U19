@@ -12,9 +12,11 @@ Einfache PHP/MySQL-Anwendung zur Mitgliederverwaltung mit Admin-Login und
    als Referenz/Dokumentation des Schemas.
 
 2. **Zugangsdaten eintragen**
-   In `config/config.php` `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS` sowie
-   `BASE_URL` (die öffentlich erreichbare URL des Projekts, ohne
-   abschließenden Slash) eintragen.
+   `config/config.example.php` nach `config/config.php` kopieren und dort
+   `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS` sowie `BASE_URL` (die öffentlich
+   erreichbare URL des Projekts, ohne abschließenden Slash) eintragen.
+   `config/config.php` ist per `.gitignore` von Git ausgeschlossen und darf
+   **niemals** eingecheckt werden, da sie das Datenbank-Passwort enthält.
 
 3. **Ersten Admin-Account anlegen**
    ```
@@ -66,15 +68,43 @@ Persönliche Felder wie Mitgliedsnummer und Status sind über diesen Link nicht
   sollten über getrennte Kanäle (z. B. E-Mail für den Link, Telefon/SMS für
   den Code) an das Mitglied übermittelt werden.
 - Nach 5 falschen Zugangsversuchen wird der Zugang für 15 Minuten gesperrt
-  (Brute-Force-Schutz).
+  (Brute-Force-Schutz) – sowohl für den öffentlichen Verifizierungs-Link als
+  auch für den Admin-Login.
 - Link und/oder Zugangscode können im Admin-Bereich (`admin/member_link.php`)
   jederzeit unabhängig voneinander neu generiert werden (der jeweils alte
   Wert wird damit ungültig).
+- Es gibt **kein fest eingebautes Standard-/Default-Passwort**: Admin-Accounts
+  werden ausschließlich explizit über `bin/create_admin.php <benutzer>
+  <passwort>` (mind. 8 Zeichen) bzw. über `admin/user_form.php` angelegt, und
+  jedes Mitglied erhält einen individuellen, zufällig erzeugten 10-stelligen
+  Zugangscode (siehe `generateAccessPassword()` in `includes/functions.php`).
+- Passwort-Hashes (`password_hash()`/bcrypt) für Admins und Mitglieds-Zugangscodes,
+  nie Klartext-Speicherung.
+- Sicherheits-Header (`Content-Security-Policy`, `X-Frame-Options`,
+  `X-Content-Type-Options`, `Referrer-Policy`) werden auf allen Seiten gesetzt.
+- Zugangsdaten zur Datenbank liegen ausschließlich in der nicht versionierten
+  `config/config.php` (siehe oben), nicht im Repository.
+- **Gesundheitsdaten:** Das Feld „Allergien“ ist eine besondere Kategorie
+  personenbezogener Daten (Art. 9 DSGVO). Die Erhebung ist nur zulässig, wenn
+  eine gültige Rechtsgrundlage vorliegt (i. d. R. ausdrückliche Einwilligung,
+  z. B. aus Sicherheitsgründen bei Sportveranstaltungen). Das muss der Verein
+  über die Beitritts-/Einwilligungserklärung sicherstellen – das Feld sollte
+  nur ausgefüllt werden, wenn eine solche Einwilligung vorliegt, und ist im
+  Formular optional.
 - Auf der öffentlichen Seite wird ein kurzer Datenschutzhinweis angezeigt.
   **Der Platzhaltertext ist noch durch eure echte Datenschutzerklärung /
   einen Link darauf zu ersetzen** – das ist eine inhaltliche/rechtliche
   Aufgabe, die der Verein (ggf. mit Datenschutzberater) festlegen muss und
   die nicht durch Code allein "DSGVO-konform" gemacht werden kann.
+
+**Noch offene, organisatorische DSGVO-Punkte (nicht durch Code lösbar):**
+- Löschkonzept/Aufbewahrungsfristen für inaktive Mitglieder festlegen (Prinzip
+  der Speicherbegrenzung, Art. 5 Abs. 1 lit. e DSGVO) – die Anwendung löscht
+  nichts automatisch.
+- Auftragsverarbeitungsvertrag (AVV) mit dem Hosting-Provider abschließen,
+  falls nicht bereits vorhanden.
+- Verzeichnis von Verarbeitungstätigkeiten (Art. 30 DSGVO) führen.
+- Echte Datenschutzerklärung verlinken (siehe oben).
 
 Bereits vor dieser Änderung angelegte Mitglieder haben noch keinen
 Zugangscode – für sie muss einmalig über „Neuen Zugangscode generieren“ in
