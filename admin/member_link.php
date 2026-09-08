@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/mailer.php';
 
 startSecureSession();
 requireLogin();
@@ -25,6 +26,8 @@ if (!empty($_SESSION['generated_password'])) {
     unset($_SESSION['generated_password']);
 }
 
+$mailNotice = null;
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verifyCsrf()) {
         die('Ungültige Anfrage.');
@@ -43,6 +46,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $upd = $pdo->prepare('UPDATE members SET access_password_hash = :hash,
                                failed_verify_attempts = 0, verify_locked_until = NULL WHERE id = :id');
         $upd->execute(['hash' => password_hash($generatedPassword, PASSWORD_DEFAULT), 'id' => $id]);
+    } elseif ($action === 'send_email') {
+        if (empty($member['email'])) {
+            $mailNotice = ['type' => 'error', 'text' => 'Für dieses Mitglied ist keine E-Mail-Adresse hinterlegt.'];
+        } else {
+            $link = buildVerifyLink($member['verify_token']);
+            $subject = 'Bitte überprüfe deine Mitgliedsdaten';
+            $text = "Hallo {$member['vorname']},\n\n"
+                . "bitte überprüfe deine bei uns hinterlegten Mitgliedsdaten über folgenden Link:\n"
+                . "$link\n\n"
+                . "Zum Öffnen benötigst du zusätzlich deinen separat mitgeteilten Zugangscode.\n\n"
+                . "Falls du keinen Zugangscode (mehr) hast, wende dich bitte an den Verein.\n";
+            try {
+                sendMail($member['email'], $subject, $text);
+                $mailNotice = ['type' => 'success', 'text' => 'Link wurde an ' . $member['email'] . ' gesendet.'];
+            } catch (RuntimeException $e) {
+                $mailNotice = ['type' => 'error', 'text' => 'E-Mail konnte nicht gesendet werden: ' . $e->getMessage()];
+            }
+        }
     }
 }
 
@@ -66,6 +87,16 @@ das Mitglied zusätzlich seine E-Mail-Adresse und den Zugangscode:</p>
     <input type="text" readonly value="<?= e($link) ?>" id="verifyLink" data-select-on-click>
     <button type="button" class="btn" data-copy-target="verifyLink">Kopieren</button>
 </div>
+
+<?php if ($mailNotice): ?>
+    <p class="alert alert-<?= $mailNotice['type'] === 'success' ? 'success' : 'error' ?>"><?= e($mailNotice['text']) ?></p>
+<?php endif; ?>
+
+<form method="post" action="member_link.php?id=<?= (int) $id ?>" style="margin-bottom:20px;">
+    <?= csrfField() ?>
+    <input type="hidden" name="action" value="send_email">
+    <button type="submit" class="btn btn-secondary">Link per E-Mail an Mitglied senden</button>
+</form>
 
 <?php if ($generatedPassword): ?>
     <div class="alert alert-warning">

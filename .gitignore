@@ -1,1 +1,6 @@
 /config/config.php
+/.env
+
+# Hochgeladene Mitgliedsfotos enthalten personenbezogene Daten - nicht versionieren
+/uploads/members/*
+!/uploads/members/.gitkeep

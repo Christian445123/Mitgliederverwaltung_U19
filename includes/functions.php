@@ -106,3 +106,76 @@ function formatDateForInput(?string $date): string
     }
     return $date;
 }
+
+/**
+ * Sozialversicherungsnummer für die Anzeige maskieren (nur letzte 4 Ziffern sichtbar).
+ * Die volle Nummer wird nirgends außer im eigenen Selbstauskunfts-Formular angezeigt.
+ */
+function maskSvnr(?string $svnr): string
+{
+    $svnr = trim((string) $svnr);
+    if ($svnr === '') {
+        return '';
+    }
+    $visible = substr($svnr, -4);
+    return str_repeat('•', max(0, strlen($svnr) - 4)) . $visible;
+}
+
+/**
+ * Hochgeladenes Passfoto validieren und speichern. Gibt den neuen Dateinamen zurück
+ * oder null bei fehlendem Upload. Wirft eine RuntimeException bei ungültiger Datei.
+ */
+function handlePassFotoUpload(array $file, int $memberId): ?string
+{
+    if (!isset($file['error']) || $file['error'] === UPLOAD_ERR_NO_FILE) {
+        return null;
+    }
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        throw new RuntimeException('Fehler beim Hochladen des Fotos.');
+    }
+
+    $maxBytes = 5 * 1024 * 1024;
+    if ($file['size'] > $maxBytes) {
+        throw new RuntimeException('Das Foto darf höchstens 5 MB groß sein.');
+    }
+
+    $imageInfo = @getimagesize($file['tmp_name']);
+    if ($imageInfo === false) {
+        throw new RuntimeException('Die Datei ist kein gültiges Bild.');
+    }
+
+    $allowedTypes = [
+        IMAGETYPE_JPEG => 'jpg',
+        IMAGETYPE_PNG  => 'png',
+    ];
+    $extension = $allowedTypes[$imageInfo[2]] ?? null;
+    if ($extension === null) {
+        throw new RuntimeException('Nur JPG- oder PNG-Bilder sind erlaubt.');
+    }
+
+    $uploadDir = __DIR__ . '/../uploads/members';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+
+    $filename = $memberId . '_' . bin2hex(random_bytes(8)) . '.' . $extension;
+    $destination = $uploadDir . '/' . $filename;
+
+    if (!move_uploaded_file($file['tmp_name'], $destination)) {
+        throw new RuntimeException('Foto konnte nicht gespeichert werden.');
+    }
+
+    return $filename;
+}
+
+/** Löscht ein zuvor hochgeladenes Passfoto vom Dateisystem (falls vorhanden). */
+function deletePassFoto(?string $filename): void
+{
+    if (!$filename) {
+        return;
+    }
+    $path = __DIR__ . '/../uploads/members/' . basename($filename);
+    if (is_file($path)) {
+        unlink($path);
+    }
+}

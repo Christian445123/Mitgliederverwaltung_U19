@@ -18,6 +18,16 @@ $member = [
     'erziehungsberechtigter' => '', 'erziehungsberechtigter_email' => '', 'erziehungsberechtigter_telefon' => '',
     'passnummer' => '', 'name_laut_pass' => '', 'allergien' => '', 'nada_kurs_datum' => '',
     'beitrittsdatum' => date('Y-m-d'), 'status' => 'aktiv',
+    'spielernummer' => '', 'bezirk' => '', 'spielposition' => '', 'herkunftsverein' => '',
+    'koerpergroesse_cm' => '', 'gewicht_kg' => '',
+    'nada_zertifikat_gueltig_bis' => '', 'nada_erlaubnis_gueltig_bis' => '',
+    'rechte_pflichten_akzeptiert_at' => null, 'bild_einverstaendnis_akzeptiert_at' => null,
+    'sozialversicherungsnummer' => '',
+    'geburtsland' => '', 'geburtsort' => '',
+    'reisepass_nr' => '', 'reisepass_ausgestellt_am' => '', 'reisepass_gueltig_bis' => '', 'reisepass_ausstellungsbehoerde' => '',
+    'pass_foto_pfad' => null,
+    'essen' => '', 'jersey_groesse' => '', 'hosen_groesse' => '', 'mesh_shorts_groesse' => '',
+    'helm_groesse' => '', 'tshirt_polo_groesse' => '', 'hoodie_groesse' => '', 'helm_vorhanden' => '',
 ];
 
 if ($isEdit) {
@@ -28,7 +38,7 @@ if ($isEdit) {
         $_SESSION['flash'] = 'Mitglied wurde nicht gefunden.';
         redirect('index.php');
     }
-    $member = $existing;
+    $member = array_merge($member, $existing);
 }
 
 $errors = [];
@@ -55,6 +65,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $member['beitrittsdatum'] = trim($_POST['beitrittsdatum'] ?? '');
         $member['status'] = ($_POST['status'] ?? 'aktiv') === 'inaktiv' ? 'inaktiv' : 'aktiv';
 
+        $member['spielernummer'] = trim($_POST['spielernummer'] ?? '');
+        $member['bezirk'] = trim($_POST['bezirk'] ?? '');
+        $member['spielposition'] = trim($_POST['position'] ?? '');
+        $member['herkunftsverein'] = trim($_POST['herkunftsverein'] ?? '');
+        $member['koerpergroesse_cm'] = trim($_POST['koerpergroesse_cm'] ?? '');
+        $member['gewicht_kg'] = trim($_POST['gewicht_kg'] ?? '');
+        $member['nada_zertifikat_gueltig_bis'] = trim($_POST['nada_zertifikat_gueltig_bis'] ?? '');
+        $member['nada_erlaubnis_gueltig_bis'] = trim($_POST['nada_erlaubnis_gueltig_bis'] ?? '');
+        $member['geburtsland'] = trim($_POST['geburtsland'] ?? '');
+        $member['geburtsort'] = trim($_POST['geburtsort'] ?? '');
+        $member['reisepass_nr'] = trim($_POST['reisepass_nr'] ?? '');
+        $member['reisepass_ausgestellt_am'] = trim($_POST['reisepass_ausgestellt_am'] ?? '');
+        $member['reisepass_gueltig_bis'] = trim($_POST['reisepass_gueltig_bis'] ?? '');
+        $member['reisepass_ausstellungsbehoerde'] = trim($_POST['reisepass_ausstellungsbehoerde'] ?? '');
+        $member['essen'] = trim($_POST['essen'] ?? '');
+        $member['jersey_groesse'] = trim($_POST['jersey_groesse'] ?? '');
+        $member['hosen_groesse'] = trim($_POST['hosen_groesse'] ?? '');
+        $member['mesh_shorts_groesse'] = trim($_POST['mesh_shorts_groesse'] ?? '');
+        $member['helm_groesse'] = trim($_POST['helm_groesse'] ?? '');
+        $member['tshirt_polo_groesse'] = trim($_POST['tshirt_polo_groesse'] ?? '');
+        $member['hoodie_groesse'] = trim($_POST['hoodie_groesse'] ?? '');
+        $member['helm_vorhanden'] = in_array($_POST['helm_vorhanden'] ?? '', ['ja', 'nein'], true) ? $_POST['helm_vorhanden'] : null;
+
+        // SVNR: Feld bleibt maskiert, nur bei expliziter Neueingabe wird der Wert geändert.
+        $newSvnr = trim($_POST['sozialversicherungsnummer_neu'] ?? '');
+        if ($newSvnr !== '') {
+            $member['sozialversicherungsnummer'] = $newSvnr;
+        }
+
+        // Einwilligungen: Zeitstempel setzen/löschen, je nachdem ob die Checkbox aktiv ist.
+        $member['rechte_pflichten_akzeptiert_at'] = !empty($_POST['rechte_pflichten_akzeptiert'])
+            ? ($member['rechte_pflichten_akzeptiert_at'] ?: date('Y-m-d H:i:s'))
+            : null;
+        $member['bild_einverstaendnis_akzeptiert_at'] = !empty($_POST['bild_einverstaendnis_akzeptiert'])
+            ? ($member['bild_einverstaendnis_akzeptiert_at'] ?: date('Y-m-d H:i:s'))
+            : null;
+
         if ($member['vorname'] === '') {
             $errors[] = 'Vorname ist ein Pflichtfeld.';
         }
@@ -69,10 +116,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($member['erziehungsberechtigter_email'] !== '' && !filter_var($member['erziehungsberechtigter_email'], FILTER_VALIDATE_EMAIL)) {
             $errors[] = 'Die E-Mail-Adresse des Erziehungsberechtigten ist ungültig.';
         }
-        foreach (['geburtsdatum', 'beitrittsdatum', 'nada_kurs_datum'] as $dateField) {
+        foreach (['geburtsdatum', 'beitrittsdatum', 'nada_kurs_datum', 'nada_zertifikat_gueltig_bis',
+                  'nada_erlaubnis_gueltig_bis', 'reisepass_ausgestellt_am', 'reisepass_gueltig_bis'] as $dateField) {
             if ($member[$dateField] !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $member[$dateField])) {
                 $errors[] = 'Ungültiges Datumsformat.';
                 break;
+            }
+        }
+        foreach (['koerpergroesse_cm' => 'Körpergröße', 'gewicht_kg' => 'Gewicht'] as $numField => $label) {
+            if ($member[$numField] !== '' && (!ctype_digit((string) $member[$numField]) || (int) $member[$numField] <= 0)) {
+                $errors[] = "$label muss eine positive Zahl sein.";
+            }
+        }
+
+        $uploadedPhoto = null;
+        if (!$errors && !empty($_FILES['pass_foto']['name'])) {
+            try {
+                $uploadedPhoto = handlePassFotoUpload($_FILES['pass_foto'], $isEdit ? $id : 0);
+            } catch (RuntimeException $e) {
+                $errors[] = $e->getMessage();
             }
         }
 
@@ -95,11 +157,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'nada_kurs_datum' => $member['nada_kurs_datum'] ?: null,
                 'beitrittsdatum' => $member['beitrittsdatum'] ?: null,
                 'status' => $member['status'],
+                'spielernummer' => $member['spielernummer'],
+                'bezirk' => $member['bezirk'],
+                'spielposition' => $member['spielposition'],
+                'herkunftsverein' => $member['herkunftsverein'],
+                'koerpergroesse_cm' => $member['koerpergroesse_cm'] !== '' ? (int) $member['koerpergroesse_cm'] : null,
+                'gewicht_kg' => $member['gewicht_kg'] !== '' ? (int) $member['gewicht_kg'] : null,
+                'nada_zertifikat_gueltig_bis' => $member['nada_zertifikat_gueltig_bis'] ?: null,
+                'nada_erlaubnis_gueltig_bis' => $member['nada_erlaubnis_gueltig_bis'] ?: null,
+                'rechte_pflichten_akzeptiert_at' => $member['rechte_pflichten_akzeptiert_at'],
+                'bild_einverstaendnis_akzeptiert_at' => $member['bild_einverstaendnis_akzeptiert_at'],
+                'sozialversicherungsnummer' => $member['sozialversicherungsnummer'],
+                'geburtsland' => $member['geburtsland'],
+                'geburtsort' => $member['geburtsort'],
+                'reisepass_nr' => $member['reisepass_nr'],
+                'reisepass_ausgestellt_am' => $member['reisepass_ausgestellt_am'] ?: null,
+                'reisepass_gueltig_bis' => $member['reisepass_gueltig_bis'] ?: null,
+                'reisepass_ausstellungsbehoerde' => $member['reisepass_ausstellungsbehoerde'],
+                'essen' => $member['essen'],
+                'jersey_groesse' => $member['jersey_groesse'],
+                'hosen_groesse' => $member['hosen_groesse'],
+                'mesh_shorts_groesse' => $member['mesh_shorts_groesse'],
+                'helm_groesse' => $member['helm_groesse'],
+                'tshirt_polo_groesse' => $member['tshirt_polo_groesse'],
+                'hoodie_groesse' => $member['hoodie_groesse'],
+                'helm_vorhanden' => $member['helm_vorhanden'],
             ];
 
             if ($isEdit) {
                 $params = $baseParams;
                 $params['id'] = $id;
+                if ($uploadedPhoto) {
+                    deletePassFoto($member['pass_foto_pfad'] ?? null);
+                    $params['pass_foto_pfad'] = $uploadedPhoto;
+                } else {
+                    $params['pass_foto_pfad'] = $member['pass_foto_pfad'];
+                }
                 $sql = 'UPDATE members SET vorname = :vorname, nachname = :nachname, geburtsdatum = :geburtsdatum,
                         strasse = :strasse, plz = :plz, ort = :ort, email = :email, telefon = :telefon,
                         erziehungsberechtigter = :erziehungsberechtigter,
@@ -107,7 +200,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         erziehungsberechtigter_telefon = :erziehungsberechtigter_telefon,
                         passnummer = :passnummer, name_laut_pass = :name_laut_pass,
                         allergien = :allergien, nada_kurs_datum = :nada_kurs_datum,
-                        beitrittsdatum = :beitrittsdatum, status = :status
+                        beitrittsdatum = :beitrittsdatum, status = :status,
+                        spielernummer = :spielernummer, bezirk = :bezirk, spielposition = :spielposition,
+                        herkunftsverein = :herkunftsverein, koerpergroesse_cm = :koerpergroesse_cm,
+                        gewicht_kg = :gewicht_kg,
+                        nada_zertifikat_gueltig_bis = :nada_zertifikat_gueltig_bis,
+                        nada_erlaubnis_gueltig_bis = :nada_erlaubnis_gueltig_bis,
+                        rechte_pflichten_akzeptiert_at = :rechte_pflichten_akzeptiert_at,
+                        bild_einverstaendnis_akzeptiert_at = :bild_einverstaendnis_akzeptiert_at,
+                        sozialversicherungsnummer = :sozialversicherungsnummer,
+                        geburtsland = :geburtsland, geburtsort = :geburtsort,
+                        reisepass_nr = :reisepass_nr, reisepass_ausgestellt_am = :reisepass_ausgestellt_am,
+                        reisepass_gueltig_bis = :reisepass_gueltig_bis,
+                        reisepass_ausstellungsbehoerde = :reisepass_ausstellungsbehoerde,
+                        pass_foto_pfad = :pass_foto_pfad,
+                        essen = :essen, jersey_groesse = :jersey_groesse, hosen_groesse = :hosen_groesse,
+                        mesh_shorts_groesse = :mesh_shorts_groesse, helm_groesse = :helm_groesse,
+                        tshirt_polo_groesse = :tshirt_polo_groesse, hoodie_groesse = :hoodie_groesse,
+                        helm_vorhanden = :helm_vorhanden
                         WHERE id = :id';
                 $pdo->prepare($sql)->execute($params);
                 $_SESSION['flash'] = 'Mitglied wurde aktualisiert.';
@@ -119,19 +229,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $params['mitgliedsnummer'] = generateMitgliedsnummer($pdo);
                 $params['verify_token'] = generateVerifyToken();
                 $params['access_password_hash'] = password_hash($accessPassword, PASSWORD_DEFAULT);
+                $params['pass_foto_pfad'] = null; // Foto wird nach dem Insert nachgetragen (Dateiname enthält die neue ID)
                 $sql = 'INSERT INTO members
                         (mitgliedsnummer, vorname, nachname, geburtsdatum, strasse, plz, ort, email, telefon,
                          erziehungsberechtigter, erziehungsberechtigter_email, erziehungsberechtigter_telefon,
                          passnummer, name_laut_pass, allergien, nada_kurs_datum,
-                         beitrittsdatum, status, verify_token, access_password_hash)
+                         beitrittsdatum, status, verify_token, access_password_hash,
+                         spielernummer, bezirk, spielposition, herkunftsverein, koerpergroesse_cm, gewicht_kg,
+                         nada_zertifikat_gueltig_bis, nada_erlaubnis_gueltig_bis,
+                         rechte_pflichten_akzeptiert_at, bild_einverstaendnis_akzeptiert_at,
+                         sozialversicherungsnummer, geburtsland, geburtsort,
+                         reisepass_nr, reisepass_ausgestellt_am, reisepass_gueltig_bis, reisepass_ausstellungsbehoerde,
+                         pass_foto_pfad, essen, jersey_groesse, hosen_groesse, mesh_shorts_groesse, helm_groesse,
+                         tshirt_polo_groesse, hoodie_groesse, helm_vorhanden)
                         VALUES
                         (:mitgliedsnummer, :vorname, :nachname, :geburtsdatum, :strasse, :plz, :ort, :email, :telefon,
                          :erziehungsberechtigter, :erziehungsberechtigter_email, :erziehungsberechtigter_telefon,
                          :passnummer, :name_laut_pass, :allergien, :nada_kurs_datum,
-                         :beitrittsdatum, :status, :verify_token, :access_password_hash)';
+                         :beitrittsdatum, :status, :verify_token, :access_password_hash,
+                         :spielernummer, :bezirk, :spielposition, :herkunftsverein, :koerpergroesse_cm, :gewicht_kg,
+                         :nada_zertifikat_gueltig_bis, :nada_erlaubnis_gueltig_bis,
+                         :rechte_pflichten_akzeptiert_at, :bild_einverstaendnis_akzeptiert_at,
+                         :sozialversicherungsnummer, :geburtsland, :geburtsort,
+                         :reisepass_nr, :reisepass_ausgestellt_am, :reisepass_gueltig_bis, :reisepass_ausstellungsbehoerde,
+                         :pass_foto_pfad, :essen, :jersey_groesse, :hosen_groesse, :mesh_shorts_groesse, :helm_groesse,
+                         :tshirt_polo_groesse, :hoodie_groesse, :helm_vorhanden)';
                 $pdo->prepare($sql)->execute($params);
                 $newId = (int) $pdo->lastInsertId();
-                $_SESSION['flash'] = 'Mitglied wurde angelegt. Link und Zugangscode können nun weitergegeben werden.';
+
+                if (!empty($_FILES['pass_foto']['name'])) {
+                    try {
+                        $photo = handlePassFotoUpload($_FILES['pass_foto'], $newId);
+                        if ($photo) {
+                            $pdo->prepare('UPDATE members SET pass_foto_pfad = :p WHERE id = :id')
+                                ->execute(['p' => $photo, 'id' => $newId]);
+                        }
+                    } catch (RuntimeException $e) {
+                        // Mitglied wurde bereits angelegt; Foto kann nachträglich über "Bearbeiten" ergänzt werden.
+                        $_SESSION['flash'] = 'Mitglied wurde angelegt, Foto-Upload ist aber fehlgeschlagen: ' . $e->getMessage();
+                    }
+                }
+
+                if (empty($_SESSION['flash'])) {
+                    $_SESSION['flash'] = 'Mitglied wurde angelegt. Link und Zugangscode können nun weitergegeben werden.';
+                }
                 $_SESSION['generated_password'] = $accessPassword;
                 redirect('member_link.php?id=' . $newId);
             }
@@ -157,7 +298,7 @@ require __DIR__ . '/../includes/admin_header.php';
     </div>
 <?php endif; ?>
 
-<form method="post" action="member_form.php<?= $isEdit ? '?id=' . (int) $id : '' ?>" class="member-form" novalidate>
+<form method="post" action="member_form.php<?= $isEdit ? '?id=' . (int) $id : '' ?>" class="member-form" enctype="multipart/form-data" novalidate>
     <?= csrfField() ?>
 
     <fieldset>
@@ -180,6 +321,26 @@ require __DIR__ . '/../includes/admin_header.php';
             <div class="form-group">
                 <label for="beitrittsdatum">Beitrittsdatum</label>
                 <input type="date" id="beitrittsdatum" name="beitrittsdatum" value="<?= e(formatDateForInput($member['beitrittsdatum'])) ?>">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="geburtsland">Geburtsland</label>
+                <input type="text" id="geburtsland" name="geburtsland" value="<?= e($member['geburtsland']) ?>">
+            </div>
+            <div class="form-group">
+                <label for="geburtsort">Geburtsort</label>
+                <input type="text" id="geburtsort" name="geburtsort" value="<?= e($member['geburtsort']) ?>">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="koerpergroesse_cm">Körpergröße (cm)</label>
+                <input type="number" min="1" id="koerpergroesse_cm" name="koerpergroesse_cm" value="<?= e((string) $member['koerpergroesse_cm']) ?>">
+            </div>
+            <div class="form-group">
+                <label for="gewicht_kg">Gewicht (kg)</label>
+                <input type="number" min="1" id="gewicht_kg" name="gewicht_kg" value="<?= e((string) $member['gewicht_kg']) ?>">
             </div>
         </div>
     </fieldset>
@@ -231,10 +392,50 @@ require __DIR__ . '/../includes/admin_header.php';
     </fieldset>
 
     <fieldset>
-        <legend>Sportliche & sonstige Angaben</legend>
+        <legend>Team & Spielbetrieb</legend>
+        <div class="form-row">
+            <div class="form-group form-group-small">
+                <label for="spielernummer">Spieler-Nr. (SZ)</label>
+                <input type="text" id="spielernummer" name="spielernummer" value="<?= e($member['spielernummer']) ?>">
+            </div>
+            <div class="form-group">
+                <label for="position">Position</label>
+                <input type="text" id="position" name="position" value="<?= e($member['spielposition']) ?>">
+            </div>
+            <div class="form-group">
+                <label for="bezirk">Bezirk</label>
+                <input type="text" id="bezirk" name="bezirk" value="<?= e($member['bezirk']) ?>">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="herkunftsverein">Herkunftsverein</label>
+            <input type="text" id="herkunftsverein" name="herkunftsverein" value="<?= e($member['herkunftsverein']) ?>">
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Zertifikate</legend>
         <div class="form-row">
             <div class="form-group">
-                <label for="passnummer">Passnummer</label>
+                <label for="nada_zertifikat_gueltig_bis">NADA-Zertifikat gültig bis</label>
+                <input type="date" id="nada_zertifikat_gueltig_bis" name="nada_zertifikat_gueltig_bis" value="<?= e(formatDateForInput($member['nada_zertifikat_gueltig_bis'])) ?>">
+            </div>
+            <div class="form-group">
+                <label for="nada_erlaubnis_gueltig_bis">NADA-Erlaubnis gültig bis</label>
+                <input type="date" id="nada_erlaubnis_gueltig_bis" name="nada_erlaubnis_gueltig_bis" value="<?= e(formatDateForInput($member['nada_erlaubnis_gueltig_bis'])) ?>">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="nada_kurs_datum">NADA-Kurs absolviert am</label>
+            <input type="date" id="nada_kurs_datum" name="nada_kurs_datum" value="<?= e(formatDateForInput($member['nada_kurs_datum'])) ?>">
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Reisedokumente</legend>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="passnummer">Sport-Passnummer</label>
                 <input type="text" id="passnummer" name="passnummer" value="<?= e($member['passnummer']) ?>">
             </div>
             <div class="form-group">
@@ -242,9 +443,108 @@ require __DIR__ . '/../includes/admin_header.php';
                 <input type="text" id="name_laut_pass" name="name_laut_pass" value="<?= e($member['name_laut_pass']) ?>">
             </div>
         </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="reisepass_nr">Reisepass-Nr.</label>
+                <input type="text" id="reisepass_nr" name="reisepass_nr" value="<?= e($member['reisepass_nr']) ?>">
+            </div>
+            <div class="form-group">
+                <label for="reisepass_ausstellungsbehoerde">Ausstellungsbehörde</label>
+                <input type="text" id="reisepass_ausstellungsbehoerde" name="reisepass_ausstellungsbehoerde" value="<?= e($member['reisepass_ausstellungsbehoerde']) ?>">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="reisepass_ausgestellt_am">Reisepass ausgestellt am</label>
+                <input type="date" id="reisepass_ausgestellt_am" name="reisepass_ausgestellt_am" value="<?= e(formatDateForInput($member['reisepass_ausgestellt_am'])) ?>">
+            </div>
+            <div class="form-group">
+                <label for="reisepass_gueltig_bis">Reisepass gültig bis</label>
+                <input type="date" id="reisepass_gueltig_bis" name="reisepass_gueltig_bis" value="<?= e(formatDateForInput($member['reisepass_gueltig_bis'])) ?>">
+            </div>
+        </div>
         <div class="form-group">
-            <label for="nada_kurs_datum">NADA-Kurs absolviert am</label>
-            <input type="date" id="nada_kurs_datum" name="nada_kurs_datum" value="<?= e(formatDateForInput($member['nada_kurs_datum'])) ?>">
+            <label for="sozialversicherungsnummer_neu">
+                Sozialversicherungsnummer
+                <?php if (!empty($member['sozialversicherungsnummer'])): ?>
+                    (aktuell hinterlegt: <?= e(maskSvnr($member['sozialversicherungsnummer'])) ?>)
+                <?php endif; ?>
+            </label>
+            <input type="text" id="sozialversicherungsnummer_neu" name="sozialversicherungsnummer_neu"
+                   placeholder="Nur ausfüllen, um die SVNR zu ändern" autocomplete="off">
+        </div>
+        <div class="form-group">
+            <label for="pass_foto">Passfoto <?= !empty($member['pass_foto_pfad']) ? '(bereits vorhanden – Auswahl ersetzt es)' : '' ?></label>
+            <?php if (!empty($member['pass_foto_pfad']) && $isEdit): ?>
+                <p><img src="member_photo.php?id=<?= (int) $id ?>" alt="Aktuelles Passfoto" style="max-height:120px;border-radius:4px;display:block;margin-bottom:8px;"></p>
+            <?php endif; ?>
+            <input type="file" id="pass_foto" name="pass_foto" accept="image/png,image/jpeg">
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Verpflegung & Ausrüstung</legend>
+        <div class="form-group">
+            <label for="essen">Essen (Ernährung/Unverträglichkeiten)</label>
+            <input type="text" id="essen" name="essen" value="<?= e($member['essen']) ?>">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="jersey_groesse">Game Jersey Größe</label>
+                <input type="text" id="jersey_groesse" name="jersey_groesse" value="<?= e($member['jersey_groesse']) ?>">
+            </div>
+            <div class="form-group">
+                <label for="hosen_groesse">Game Hosen Größe</label>
+                <input type="text" id="hosen_groesse" name="hosen_groesse" value="<?= e($member['hosen_groesse']) ?>">
+            </div>
+            <div class="form-group">
+                <label for="mesh_shorts_groesse">Mesh Shorts Größe</label>
+                <input type="text" id="mesh_shorts_groesse" name="mesh_shorts_groesse" value="<?= e($member['mesh_shorts_groesse']) ?>">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="helm_groesse">Helm Größe</label>
+                <input type="text" id="helm_groesse" name="helm_groesse" value="<?= e($member['helm_groesse']) ?>">
+            </div>
+            <div class="form-group">
+                <label for="tshirt_polo_groesse">T-Shirt & Polo Größe (MACRON)</label>
+                <input type="text" id="tshirt_polo_groesse" name="tshirt_polo_groesse" value="<?= e($member['tshirt_polo_groesse']) ?>">
+            </div>
+            <div class="form-group">
+                <label for="hoodie_groesse">Hoodie Größe (MACRON)</label>
+                <input type="text" id="hoodie_groesse" name="hoodie_groesse" value="<?= e($member['hoodie_groesse']) ?>">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="helm_vorhanden">Helm vorhanden</label>
+            <select id="helm_vorhanden" name="helm_vorhanden">
+                <option value="">– bitte wählen –</option>
+                <option value="ja" <?= $member['helm_vorhanden'] === 'ja' ? 'selected' : '' ?>>Ja</option>
+                <option value="nein" <?= $member['helm_vorhanden'] === 'nein' ? 'selected' : '' ?>>Nein</option>
+            </select>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Einwilligungen</legend>
+        <div class="form-group">
+            <label>
+                <input type="checkbox" name="rechte_pflichten_akzeptiert" value="1" <?= $member['rechte_pflichten_akzeptiert_at'] ? 'checked' : '' ?>>
+                Rechte & Pflichten wurden akzeptiert
+                <?php if ($member['rechte_pflichten_akzeptiert_at']): ?>
+                    <span class="badge badge-gray">seit <?= e(date('d.m.Y', strtotime($member['rechte_pflichten_akzeptiert_at']))) ?></span>
+                <?php endif; ?>
+            </label>
+        </div>
+        <div class="form-group">
+            <label>
+                <input type="checkbox" name="bild_einverstaendnis_akzeptiert" value="1" <?= $member['bild_einverstaendnis_akzeptiert_at'] ? 'checked' : '' ?>>
+                Einverständnis zur Bildnutzung liegt vor
+                <?php if ($member['bild_einverstaendnis_akzeptiert_at']): ?>
+                    <span class="badge badge-gray">seit <?= e(date('d.m.Y', strtotime($member['bild_einverstaendnis_akzeptiert_at']))) ?></span>
+                <?php endif; ?>
+            </label>
         </div>
         <div class="form-group">
             <label for="allergien">Allergien</label>

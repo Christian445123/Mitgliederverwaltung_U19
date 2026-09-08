@@ -78,6 +78,44 @@ function membersColumnDefinitions(): array
         'access_password_hash'             => "VARCHAR(255) NULL",
         'failed_verify_attempts'           => "INT UNSIGNED NOT NULL DEFAULT 0",
         'verify_locked_until'              => "DATETIME NULL",
+
+        // --- Team & Spielbetrieb (nur Admin) ---------------------------
+        'spielernummer'                    => "VARCHAR(10) NULL",
+        'bezirk'                           => "VARCHAR(100) NULL",
+        'spielposition'                    => "VARCHAR(50) NULL",
+        'herkunftsverein'                  => "VARCHAR(150) NULL",
+        'koerpergroesse_cm'                => "SMALLINT UNSIGNED NULL",
+        'gewicht_kg'                       => "SMALLINT UNSIGNED NULL",
+
+        // --- Zertifikate (nur Admin) ------------------------------------
+        'nada_zertifikat_gueltig_bis'      => "DATE NULL",
+        'nada_erlaubnis_gueltig_bis'       => "DATE NULL",
+
+        // --- Einwilligungen (mit Zeitstempel als Nachweis) ---------------
+        'rechte_pflichten_akzeptiert_at'   => "DATETIME NULL",
+        'bild_einverstaendnis_akzeptiert_at' => "DATETIME NULL",
+
+        // --- Sozialversicherung (sensibel - im UI maskiert dargestellt) --
+        'sozialversicherungsnummer'        => "VARCHAR(20) NULL",
+
+        // --- Reisedokumente ----------------------------------------------
+        'geburtsland'                      => "VARCHAR(100) NULL",
+        'geburtsort'                       => "VARCHAR(100) NULL",
+        'reisepass_nr'                     => "VARCHAR(30) NULL",
+        'reisepass_ausgestellt_am'         => "DATE NULL",
+        'reisepass_gueltig_bis'            => "DATE NULL",
+        'reisepass_ausstellungsbehoerde'   => "VARCHAR(150) NULL",
+        'pass_foto_pfad'                   => "VARCHAR(255) NULL",
+
+        // --- Verpflegung & Ausrüstung -------------------------------------
+        'essen'                            => "VARCHAR(150) NULL",
+        'jersey_groesse'                   => "VARCHAR(10) NULL",
+        'hosen_groesse'                    => "VARCHAR(10) NULL",
+        'mesh_shorts_groesse'              => "VARCHAR(10) NULL",
+        'helm_groesse'                     => "VARCHAR(10) NULL",
+        'tshirt_polo_groesse'              => "VARCHAR(10) NULL",
+        'hoodie_groesse'                   => "VARCHAR(10) NULL",
+        'helm_vorhanden'                   => "ENUM('ja','nein') NULL",
     ];
 }
 

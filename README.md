@@ -12,11 +12,18 @@ Einfache PHP/MySQL-Anwendung zur Mitgliederverwaltung mit Admin-Login und
    als Referenz/Dokumentation des Schemas.
 
 2. **Zugangsdaten eintragen**
-   `config/config.example.php` nach `config/config.php` kopieren und dort
-   `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS` sowie `BASE_URL` (die öffentlich
-   erreichbare URL des Projekts, ohne abschließenden Slash) eintragen.
-   `config/config.php` ist per `.gitignore` von Git ausgeschlossen und darf
-   **niemals** eingecheckt werden, da sie das Datenbank-Passwort enthält.
+   - `.env.example` nach `.env` kopieren (Projekt-Wurzelverzeichnis) und dort
+     die kritischen Zugangsdaten eintragen: `DB_HOST`/`DB_NAME`/`DB_USER`/`DB_PASS`
+     sowie `SMTP_*` für den E-Mail-Versand (siehe Abschnitt „E-Mail-Versand“
+     unten).
+   - `config/config.example.php` nach `config/config.php` kopieren und dort
+     `BASE_URL` (die öffentlich erreichbare URL des Projekts, ohne
+     abschließenden Slash) eintragen. `config.php` liest die kritischen Werte
+     automatisch aus der `.env`.
+
+   Sowohl `.env` als auch `config/config.php` sind per `.gitignore` von Git
+   ausgeschlossen und dürfen **niemals** eingecheckt werden, da sie Passwörter
+   enthalten.
 
 3. **Ersten Admin-Account anlegen**
    ```
@@ -110,6 +117,68 @@ Bereits vor dieser Änderung angelegte Mitglieder haben noch keinen
 Zugangscode – für sie muss einmalig über „Neuen Zugangscode generieren“ in
 `member_link.php` ein Code erzeugt werden, bevor ihr Link nutzbar ist.
 
+## E-Mail-Versand
+
+Über `admin/member_link.php` kann der Verifizierungs-Link direkt per E-Mail an
+das Mitglied verschickt werden (Button „Link per E-Mail an Mitglied senden“).
+Der Versand nutzt einen schlanken, selbst geschriebenen SMTP-Client
+(`includes/mailer.php`, kein Composer/PHPMailer nötig) und liest die
+Zugangsdaten aus der `.env`:
+
+```
+SMTP_HOST=mail.eurehostingfirma.at
+SMTP_PORT=587
+SMTP_ENCRYPTION=STARTTLS   # STARTTLS/TLS oder SSL
+SMTP_USERNAME=noreply@euerverein.at
+SMTP_PASSWORD=...
+SMTP_FROM=noreply@euerverein.at
+```
+
+Ist `SMTP_HOST` leer, ist der Mail-Versand deaktiviert und der Button zeigt
+eine Fehlermeldung statt zu versenden. Aus Sicherheitsgründen wird **nur der
+Link** per E-Mail verschickt, niemals der Zugangscode (siehe „getrennte
+Kanäle“ oben).
+
+⚠️ Falls euer `SMTP_PASSWORD` mit einem Präfix wie `ENC:` beginnt: das ist
+kein Format, das `includes/mailer.php` versteht – dort wird der Wert 1:1 als
+Passwort für die SMTP-Anmeldung verwendet. Ein `ENC:`-Wert stammt vermutlich
+aus einem anderen Tool/einer anderen Verschlüsselung und muss durch das
+**echte Klartext-Passwort** des Mail-Postfachs ersetzt werden, sonst schlägt
+die Anmeldung beim Mailserver fehl.
+
+## Mitglieds-Datenfelder (Team, Ausrüstung, Reisedokumente)
+
+Neben den Basisdaten erfasst die Anwendung noch:
+- **Team & Spielbetrieb** (nur Admin): Spielernummer, Position, Bezirk,
+  Herkunftsverein, Körpergröße, Gewicht.
+- **Zertifikate** (nur Admin): NADA-Zertifikat/-Erlaubnis gültig bis.
+- **Reisedokumente** (Mitglied + Admin): Geburtsland/-ort, Reisepassnummer,
+  ausgestellt am/gültig bis, Ausstellungsbehörde, Sozialversicherungsnummer,
+  Passfoto-Upload.
+- **Ausrüstung** (Mitglied + Admin): Größen für Jersey, Hose, Mesh Shorts,
+  Helm, T-Shirt/Polo (MACRON), Hoodie (MACRON), ob ein eigener Helm vorhanden
+  ist, sowie Ernährungshinweise („Essen“).
+- **Einwilligungen** (mit Zeitstempel als Nachweis): Akzeptanz der Rechte &
+  Pflichten (Pflicht beim Speichern über den Mitglieder-Link) sowie optionale
+  Einwilligung zur Bildnutzung.
+
+**Besonders sensible Felder – zusätzliche Sorgfaltspflichten:**
+- **Sozialversicherungsnummer**: ein staatlicher Personenidentifikator. Wird
+  im Admin-Bereich nur maskiert angezeigt (`maskSvnr()` in
+  `includes/functions.php`, z. B. `••••••1234`) und kann dort nur durch
+  Neueingabe geändert, nicht eingesehen werden. Im eigenen
+  Selbstauskunfts-Formular (`verify.php`) sieht das Mitglied naturgemäß seine
+  eigene volle Nummer.
+- **Passfotos**: werden in `uploads/members/` gespeichert, das per
+  `.htaccess` gegen direkten Web-Zugriff gesperrt ist. Ausgeliefert werden sie
+  ausschließlich über die authentifizierten Endpunkte
+  `admin/member_photo.php` (Admin-Login erforderlich) bzw. `verify_photo.php`
+  (nur nach erfolgreicher Freischaltung des jeweiligen Mitglieds).
+- **Reisepassdaten**: nur für Meisterschafts-/Turnier-Meldungen bzw.
+  internationale Reisen erheben – im Zweifel mit dem Verband/Datenschutz-
+  berater abstimmen, ob und wie lange diese Daten nach der jeweiligen
+  Veranstaltung noch benötigt werden.
+
 ## Auto-Migration
 
 `includes/migrate.php` prüft bei jedem Datenbank-Verbindungsaufbau
@@ -128,8 +197,9 @@ manuellen SQL-Import.
   `config/config.php` ist `FORCE_HTTPS_COOKIE` auf `true` gesetzt, damit
   Session-Cookies nur über HTTPS übertragen werden.
 - `DEBUG` in `config/config.php` im Produktivbetrieb auf `false` belassen.
-- Die Ordner `config/`, `includes/`, `sql/` und `bin/` sind per `.htaccess`
-  gegen direkten Web-Zugriff abgesichert (funktioniert nur unter Apache mit
+- Die Ordner `config/`, `includes/`, `sql/`, `bin/` und `uploads/` sind per
+  `.htaccess` gegen direkten Web-Zugriff abgesichert, die `.env` zusätzlich
+  über eine Regel in der Root-`.htaccess` (funktioniert nur unter Apache mit
   aktiviertem `.htaccess`-Support – bei anderen Webservern z. B. Nginx müssen
-  diese Ordner analog in der Server-Konfiguration gesperrt oder komplett
-  außerhalb des Web-Roots abgelegt werden).
+  diese Ordner/Dateien analog in der Server-Konfiguration gesperrt oder
+  komplett außerhalb des Web-Roots abgelegt werden).
