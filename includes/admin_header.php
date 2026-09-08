@@ -29,4 +29,11 @@
             &middot; <a href="logout.php">Abmelden</a>
         </div>
     </header>
+    <?php if (!empty($_SESSION['emergency_login'])): ?>
+        <p class="alert alert-error" style="margin:0;border-radius:0;">
+            ⚠️ Angemeldet über den <strong>Notfall-Zugang</strong> (ohne Datenbank-Benutzerprüfung).
+            Bitte sobald wie möglich einen regulären Administrator-Account reparieren/anlegen
+            (<code>php bin/create_admin.php</code>) und diesen Zugang danach nicht mehr nutzen.
+        </p>
+    <?php endif; ?>
     <main class="content">

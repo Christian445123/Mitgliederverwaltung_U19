@@ -12,6 +12,51 @@ function sendSecurityHeaders(): void
     header("Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none'");
 }
 
+/**
+ * Datei-basierte Brute-Force-Sperre für den Notfall-Admin-Login (EMERGENCY_ADMIN_*),
+ * der ohne Datenbank funktioniert und daher nicht über die admins-Tabelle
+ * gesperrt werden kann. Zustand liegt in data/emergency_login.json (per
+ * .htaccess gegen Web-Zugriff gesperrt).
+ */
+function emergencyLoginStatePath(): string
+{
+    return __DIR__ . '/../data/emergency_login.json';
+}
+
+function getEmergencyLoginLockout(): array
+{
+    $path = emergencyLoginStatePath();
+    if (!is_file($path)) {
+        return ['attempts' => 0, 'locked_until' => null];
+    }
+    $data = json_decode((string) file_get_contents($path), true);
+    if (!is_array($data)) {
+        return ['attempts' => 0, 'locked_until' => null];
+    }
+    return [
+        'attempts' => (int) ($data['attempts'] ?? 0),
+        'locked_until' => $data['locked_until'] ?? null,
+    ];
+}
+
+function recordEmergencyLoginFailure(int $maxAttempts, int $lockoutMinutes): void
+{
+    $state = getEmergencyLoginLockout();
+    $state['attempts']++;
+    if ($state['attempts'] >= $maxAttempts) {
+        $state['locked_until'] = date('Y-m-d H:i:s', time() + $lockoutMinutes * 60);
+    }
+    file_put_contents(emergencyLoginStatePath(), json_encode($state), LOCK_EX);
+}
+
+function clearEmergencyLoginLockout(): void
+{
+    $path = emergencyLoginStatePath();
+    if (is_file($path)) {
+        unlink($path);
+    }
+}
+
 /** HTML-sicher ausgeben */
 function e(?string $value): string
 {

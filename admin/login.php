@@ -23,6 +23,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($username === '' || $password === '') {
             $error = 'Bitte Benutzername und Passwort eingeben.';
+        } elseif (EMERGENCY_ADMIN_USERNAME !== '' && hash_equals(EMERGENCY_ADMIN_USERNAME, $username)) {
+            // Notfall-Zugang: funktioniert bewusst ohne Datenbankzugriff, z. B. falls
+            // die admins-Tabelle leer/nicht erreichbar ist. Siehe includes/env.php.
+            $lockout = getEmergencyLoginLockout();
+            $lockedUntil = $lockout['locked_until'] ? strtotime($lockout['locked_until']) : null;
+
+            if ($lockedUntil && $lockedUntil > time()) {
+                $minutesLeft = max(1, (int) ceil(($lockedUntil - time()) / 60));
+                $error = "Zu viele Fehlversuche. Bitte in etwa {$minutesLeft} Minute(n) erneut versuchen.";
+            } elseif (EMERGENCY_ADMIN_PASSWORD_HASH !== '' && password_verify($password, EMERGENCY_ADMIN_PASSWORD_HASH)) {
+                clearEmergencyLoginLockout();
+                loginAdmin(0, EMERGENCY_ADMIN_USERNAME, 'administrator');
+                $_SESSION['emergency_login'] = true;
+                redirect('index.php');
+            } else {
+                recordEmergencyLoginFailure(MAX_LOGIN_ATTEMPTS, LOGIN_LOCKOUT_MINUTES);
+                $error = 'Benutzername oder Passwort ist falsch.';
+            }
         } else {
             $pdo = getDb();
             $stmt = $pdo->prepare('SELECT id, username, password_hash, role, failed_login_attempts, login_locked_until FROM admins WHERE username = :username');

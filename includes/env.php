@@ -77,6 +77,13 @@ define('BASE_URL', rtrim(env('BASE_URL', 'https://example.org'), '/'));
 // true, wenn die Seite ausschließlich über HTTPS erreichbar ist (empfohlen)
 define('FORCE_HTTPS_COOKIE', filter_var(env('FORCE_HTTPS_COOKIE', 'true'), FILTER_VALIDATE_BOOLEAN));
 
+// --- Notfall-Zugang (optional, standardmäßig deaktiviert) ----------------
+// Ermöglicht einen Admin-Login ohne Datenbank-Abfrage, falls z. B. die
+// `admins`-Tabelle versehentlich leer ist. Nur aktiv, wenn beide Werte
+// gesetzt sind. Hash mit `php bin/hash_password.php <passwort>` erzeugen.
+define('EMERGENCY_ADMIN_USERNAME', env('EMERGENCY_ADMIN_USERNAME', ''));
+define('EMERGENCY_ADMIN_PASSWORD_HASH', env('EMERGENCY_ADMIN_PASSWORD_HASH', ''));
+
 // --- Fehleranzeige --------------------------------------------------------
 // Im Produktivbetrieb auf false stellen! (verhindert, dass Fehlermeldungen
 // mit ggf. sensiblen Details öffentlich angezeigt werden)

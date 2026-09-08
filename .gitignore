@@ -3,3 +3,8 @@
 # Hochgeladene Mitgliedsfotos enthalten personenbezogene Daten - nicht versionieren
 /uploads/members/*
 !/uploads/members/.gitkeep
+
+# Laufzeit-Status (z. B. Notfall-Login-Sperre) - nicht versionieren
+/data/*
+!/data/.gitkeep
+!/data/.htaccess

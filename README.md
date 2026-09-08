@@ -177,6 +177,50 @@ Neben den Basisdaten erfasst die Anwendung noch:
   berater abstimmen, ob und wie lange diese Daten nach der jeweiligen
   Veranstaltung noch benötigt werden.
 
+## Anwendung aktualisieren (Deployment)
+
+Läuft die Anwendung auf dem Server als Git-Checkout, aktualisiert
+```
+php bin/update.php
+```
+den Code per `git pull --ff-only` und stößt danach sofort die
+Datenbank-Migration an (statt bis zum nächsten Seitenaufruf zu warten). Das
+Script bricht **ab, ohne etwas zu verändern**, falls es auf dem Server nicht
+committete lokale Änderungen findet (Schutz vor versehentlichem Datenverlust)
+oder falls `git pull` wegen divergierter Historie nicht als reines
+Fast-Forward möglich ist.
+
+## Notfall-Zugang ohne Datenbank
+
+Für den seltenen Fall, dass die `admins`-Tabelle leer/beschädigt ist oder die
+Datenbank nicht erreichbar ist, gibt es einen optionalen, standardmäßig
+**deaktivierten** Notfall-Login (`EMERGENCY_ADMIN_USERNAME` /
+`EMERGENCY_ADMIN_PASSWORD_HASH` in der `.env`), der ohne Datenbankabfrage
+funktioniert:
+
+1. Passwort-Hash erzeugen: `php bin/hash_password.php <ein_langes_passwort>`
+2. In der `.env` eintragen:
+   ```
+   EMERGENCY_ADMIN_USERNAME=notfall
+   EMERGENCY_ADMIN_PASSWORD_HASH=<hier der erzeugte Hash>
+   ```
+3. Damit kann man sich in `admin/login.php` unabhängig von der `admins`-Tabelle
+   anmelden und z. B. über `admin/users.php` einen regulären Administrator
+   wiederherstellen.
+
+**Wichtig:**
+- Standardmäßig leer = deaktiviert. Nur aktivieren, wenn wirklich benötigt.
+- Es zeigt einen deutlichen Warn-Banner im Admin-Bereich, solange man darüber
+  angemeldet ist.
+- Fehlversuche werden dateibasiert gesperrt (`data/emergency_login.json`,
+  5 Versuche/15 Minuten), da hierfür keine Datenbank zur Verfügung steht.
+- Diese Zugangsdaten sollten nach der eigentlichen Notfall-Nutzung wieder aus
+  der `.env` entfernt bzw. das Passwort geändert werden.
+- Funktioniert nur, wenn die Datenbank selbst erreichbar ist ODER die
+  `admins`-Tabelle das Problem ist – bei einem echten DB-Verbindungsausfall
+  kommt man zwar in den Admin-Bereich, die eigentliche Mitgliederverwaltung
+  benötigt aber weiterhin eine funktionierende Datenbank.
+
 ## Auto-Migration
 
 `includes/migrate.php` prüft bei jedem Datenbank-Verbindungsaufbau
