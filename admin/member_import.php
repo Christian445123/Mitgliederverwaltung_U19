@@ -169,13 +169,16 @@ function guessFieldFromHeader(string $header): ?string
 }
 
 $importDir = __DIR__ . '/../data/imports';
-if (!is_dir($importDir)) {
-    mkdir($importDir, 0755, true);
-}
-// Alte, abgebrochene Import-Sitzungen (älter als 1 Stunde) aufräumen
-foreach (glob($importDir . '/*.json') ?: [] as $oldFile) {
-    if (filemtime($oldFile) < time() - 3600) {
-        unlink($oldFile);
+$importDirError = null;
+if (!is_dir($importDir) && !@mkdir($importDir, 0755, true) && !is_dir($importDir)) {
+    $importDirError = "Verzeichnis „data/imports“ konnte nicht angelegt werden (Schreibrechte auf "
+        . "„data/“ prüfen, z. B. `chmod 775 data` bzw. passenden Besitzer setzen).";
+} else {
+    // Alte, abgebrochene Import-Sitzungen (älter als 1 Stunde) aufräumen
+    foreach (glob($importDir . '/*.json') ?: [] as $oldFile) {
+        if (filemtime($oldFile) < time() - 3600) {
+            unlink($oldFile);
+        }
     }
 }
 
@@ -184,7 +187,12 @@ $errors = [];
 $preview = null;
 $importResult = null;
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && !verifyCsrf()) {
+if ($importDirError) {
+    $errors[] = $importDirError;
+    $step = 'upload';
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$importDirError && !verifyCsrf()) {
     $errors[] = 'Ungültige Anfrage. Bitte lade die Seite neu und versuche es erneut.';
     $step = 'upload';
 }
@@ -211,22 +219,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$errors && $step === 'parse') {
 
             if (!$rows) {
                 $errors[] = 'Nach Abzug der Kopfzeile sind keine Datenzeilen mehr übrig.';
+            } elseif (!is_writable($importDir)) {
+                $errors[] = "Verzeichnis „data/imports“ ist auf dem Server nicht beschreibbar. "
+                    . "Bitte Schreibrechte für den Webserver-Benutzer setzen (z. B. `chmod 775 data data/imports` "
+                    . "bzw. `chown` auf den richtigen Benutzer) und erneut versuchen.";
             } else {
                 $token = bin2hex(random_bytes(16));
-                file_put_contents($importDir . '/' . $token . '.json', json_encode([
+                $written = file_put_contents($importDir . '/' . $token . '.json', json_encode([
                     'header' => $header,
                     'rows' => $rows,
                 ]));
 
-                $columnCount = max(array_map('count', $rows));
-                $preview = [
-                    'token' => $token,
-                    'header' => $header,
-                    'sample' => array_slice($rows, 0, 3),
-                    'columnCount' => $columnCount,
-                    'rowCount' => count($rows),
-                ];
-                $step = 'mapping';
+                if ($written === false) {
+                    $errors[] = 'Die hochgeladenen Daten konnten nicht zwischengespeichert werden (Schreibfehler in data/imports). Bitte Verzeichnisrechte auf dem Server prüfen.';
+                } else {
+                    $columnCount = max(array_map('count', $rows));
+                    $preview = [
+                        'token' => $token,
+                        'header' => $header,
+                        'sample' => array_slice($rows, 0, 3),
+                        'rows' => $rows,
+                        'columnCount' => $columnCount,
+                        'rowCount' => count($rows),
+                    ];
+                    $step = 'mapping';
+                }
             }
         }
     }
@@ -423,6 +440,30 @@ require __DIR__ . '/../includes/admin_header.php';
                         </td>
                     </tr>
                 <?php endfor; ?>
+            </tbody>
+        </table>
+        </div>
+
+        <h2 style="margin-top:24px;">Vorschau aller <?= (int) $preview['rowCount'] ?> Datensätze</h2>
+        <div class="table-scroll" style="overflow:auto;max-height:600px;border:1px solid var(--color-border);border-radius:var(--radius);">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <?php for ($i = 0; $i < $preview['columnCount']; $i++): ?>
+                        <th><?= e($preview['header'][$i] ?? ('Spalte ' . ($i + 1))) ?></th>
+                    <?php endfor; ?>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($preview['rows'] as $rowIndex => $row): ?>
+                    <tr>
+                        <td><?= $rowIndex + 1 ?></td>
+                        <?php for ($i = 0; $i < $preview['columnCount']; $i++): ?>
+                            <td style="white-space:nowrap;"><?= e($row[$i] ?? '') ?></td>
+                        <?php endfor; ?>
+                    </tr>
+                <?php endforeach; ?>
             </tbody>
         </table>
         </div>
