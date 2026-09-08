@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/env.php';
 require_once __DIR__ . '/functions.php';
 
 function startSecureSession(): void

@@ -1,7 +1,7 @@
 <?php
 /**
  * Schlanker SMTP-Client ohne externe Abhängigkeiten (kein Composer nötig).
- * Zugangsdaten stehen in config/config.php (SMTP_*-Konstanten).
+ * Zugangsdaten stehen in der .env (SMTP_*, siehe includes/env.php).
  *
  * Verwendung:
  *   sendMail('empfaenger@example.org', 'Betreff', 'Text-Version', '<p>HTML-Version</p>');
@@ -13,7 +13,7 @@
 function sendMail(string $to, string $subject, string $textBody, ?string $htmlBody = null): bool
 {
     if (!defined('SMTP_HOST') || SMTP_HOST === '') {
-        throw new RuntimeException('E-Mail-Versand ist nicht konfiguriert (SMTP_HOST fehlt in config.php).');
+        throw new RuntimeException('E-Mail-Versand ist nicht konfiguriert (SMTP_HOST fehlt in der .env).');
     }
     if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
         throw new RuntimeException('Ungültige Empfänger-E-Mail-Adresse.');

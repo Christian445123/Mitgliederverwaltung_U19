@@ -129,10 +129,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        // Für neue Mitglieder wird der Upload erst NACH dem Insert verarbeitet (siehe unten),
+        // da der Dateiname die künftige ID enthält und move_uploaded_file() nur einmal pro
+        // Request funktioniert - hier also nur für die Bearbeitung eines bestehenden Mitglieds.
         $uploadedPhoto = null;
-        if (!$errors && !empty($_FILES['pass_foto']['name'])) {
+        if (!$errors && $isEdit && !empty($_FILES['pass_foto']['name'])) {
             try {
-                $uploadedPhoto = handlePassFotoUpload($_FILES['pass_foto'], $isEdit ? $id : 0);
+                $uploadedPhoto = handlePassFotoUpload($_FILES['pass_foto'], $id);
             } catch (RuntimeException $e) {
                 $errors[] = $e->getMessage();
             }

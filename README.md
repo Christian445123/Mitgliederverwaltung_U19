@@ -12,18 +12,16 @@ Einfache PHP/MySQL-Anwendung zur Mitgliederverwaltung mit Admin-Login und
    als Referenz/Dokumentation des Schemas.
 
 2. **Zugangsdaten eintragen**
-   - `.env.example` nach `.env` kopieren (Projekt-Wurzelverzeichnis) und dort
-     die kritischen Zugangsdaten eintragen: `DB_HOST`/`DB_NAME`/`DB_USER`/`DB_PASS`
-     sowie `SMTP_*` für den E-Mail-Versand (siehe Abschnitt „E-Mail-Versand“
-     unten).
-   - `config/config.example.php` nach `config/config.php` kopieren und dort
-     `BASE_URL` (die öffentlich erreichbare URL des Projekts, ohne
-     abschließenden Slash) eintragen. `config.php` liest die kritischen Werte
-     automatisch aus der `.env`.
+   `.env.example` nach `.env` kopieren (Projekt-Wurzelverzeichnis) und dort
+   alle Werte eintragen: `DB_HOST`/`DB_NAME`/`DB_USER`/`DB_PASS`, `SMTP_*` für
+   den E-Mail-Versand (siehe Abschnitt „E-Mail-Versand“ unten), `BASE_URL`
+   (die öffentlich erreichbare URL des Projekts, ohne abschließenden Slash),
+   sowie `FORCE_HTTPS_COOKIE`/`DEBUG`.
 
-   Sowohl `.env` als auch `config/config.php` sind per `.gitignore` von Git
-   ausgeschlossen und dürfen **niemals** eingecheckt werden, da sie Passwörter
-   enthalten.
+   Es gibt keine separate `config.php` mehr – `includes/env.php` liest die
+   `.env` beim ersten Include automatisch ein und definiert daraus alle
+   Konstanten. `.env` ist per `.gitignore` von Git ausgeschlossen und darf
+   **niemals** eingecheckt werden, da sie Passwörter enthält.
 
 3. **Ersten Admin-Account anlegen**
    ```
@@ -89,8 +87,8 @@ Persönliche Felder wie Mitgliedsnummer und Status sind über diesen Link nicht
   nie Klartext-Speicherung.
 - Sicherheits-Header (`Content-Security-Policy`, `X-Frame-Options`,
   `X-Content-Type-Options`, `Referrer-Policy`) werden auf allen Seiten gesetzt.
-- Zugangsdaten zur Datenbank liegen ausschließlich in der nicht versionierten
-  `config/config.php` (siehe oben), nicht im Repository.
+- Zugangsdaten (Datenbank, SMTP) liegen ausschließlich in der nicht
+  versionierten `.env` (siehe oben), nicht im Repository.
 - **Gesundheitsdaten:** Das Feld „Allergien“ ist eine besondere Kategorie
   personenbezogener Daten (Art. 9 DSGVO). Die Erhebung ist nur zulässig, wenn
   eine gültige Rechtsgrundlage vorliegt (i. d. R. ausdrückliche Einwilligung,
@@ -193,11 +191,11 @@ manuellen SQL-Import.
 
 ## Hinweise zum Betrieb
 
-- Für den produktiven Einsatz **unbedingt HTTPS** verwenden – in
-  `config/config.php` ist `FORCE_HTTPS_COOKIE` auf `true` gesetzt, damit
-  Session-Cookies nur über HTTPS übertragen werden.
-- `DEBUG` in `config/config.php` im Produktivbetrieb auf `false` belassen.
-- Die Ordner `config/`, `includes/`, `sql/`, `bin/` und `uploads/` sind per
+- Für den produktiven Einsatz **unbedingt HTTPS** verwenden – `FORCE_HTTPS_COOKIE`
+  in der `.env` sollte auf `true` stehen, damit Session-Cookies nur über
+  HTTPS übertragen werden.
+- `DEBUG` in der `.env` im Produktivbetrieb auf `false` belassen.
+- Die Ordner `includes/`, `sql/`, `bin/` und `uploads/` sind per
   `.htaccess` gegen direkten Web-Zugriff abgesichert, die `.env` zusätzlich
   über eine Regel in der Root-`.htaccess` (funktioniert nur unter Apache mit
   aktiviertem `.htaccess`-Support – bei anderen Webservern z. B. Nginx müssen

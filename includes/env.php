@@ -1,10 +1,10 @@
 <?php
 /**
- * Minimaler .env-Loader ohne externe Abhängigkeiten (kein Composer nötig).
- * Liest KEY=VALUE-Zeilen aus einer Datei und stellt sie über env() bereit.
- * Kommentarzeilen (#) und leere Zeilen werden ignoriert, Anführungszeichen
- * um Werte werden entfernt. Bereits gesetzte echte Umgebungsvariablen
- * (z. B. vom Hoster vorgegeben) haben Vorrang vor der .env-Datei.
+ * Bootstrap dieser Installation: liest die .env-Datei im Projekt-
+ * Wurzelverzeichnis ein (kein Composer/Library nötig) und stellt alle
+ * Einstellungen als Konstanten bereit. Diese Datei enthält selbst keine
+ * echten Werte - alles steht in .env (nicht in Git, siehe .gitignore).
+ * Vorlage für eine Neuinstallation: .env.example.
  */
 
 function loadEnv(string $path): void
@@ -48,3 +48,46 @@ function env(string $key, $default = null)
     $value = getenv($key);
     return $value === false ? $default : $value;
 }
+
+loadEnv(__DIR__ . '/../.env');
+
+// --- Datenbank ---------------------------------------------------------
+define('DB_HOST', env('DB_HOST', 'localhost'));
+define('DB_NAME', env('DB_NAME', 'mitglieddb'));
+define('DB_USER', env('DB_USER', 'mitglied'));
+define('DB_PASS', env('DB_PASS', ''));
+define('DB_CHARSET', 'utf8mb4');
+
+// --- E-Mail-Versand (SMTP) ------------------------------------------------
+// Leerer SMTP_HOST bedeutet: Mail-Versand deaktiviert (includes/mailer.php
+// wirft dann beim Versandversuch eine RuntimeException).
+define('SMTP_HOST', env('SMTP_HOST', ''));
+define('SMTP_PORT', (int) env('SMTP_PORT', 587));
+define('SMTP_ENCRYPTION', env('SMTP_ENCRYPTION', 'tls')); // 'tls'/'starttls', 'ssl' oder ''
+define('SMTP_USERNAME', env('SMTP_USERNAME', ''));
+define('SMTP_PASSWORD', env('SMTP_PASSWORD', ''));
+define('SMTP_FROM_EMAIL', env('SMTP_FROM', env('SMTP_USERNAME', 'verein@example.org')));
+define('SMTP_FROM_NAME', env('SMTP_FROM_NAME', 'Mitgliederverwaltung'));
+
+// --- Basis-URL (für die Erstellung der Verifizierungs-Links) -----------
+// Ohne abschließenden Slash! Beispiel: 'https://verein.example.org'
+define('BASE_URL', rtrim(env('BASE_URL', 'https://example.org'), '/'));
+
+// --- Sicherheit ----------------------------------------------------------
+// true, wenn die Seite ausschließlich über HTTPS erreichbar ist (empfohlen)
+define('FORCE_HTTPS_COOKIE', filter_var(env('FORCE_HTTPS_COOKIE', 'true'), FILTER_VALIDATE_BOOLEAN));
+
+// --- Fehleranzeige --------------------------------------------------------
+// Im Produktivbetrieb auf false stellen! (verhindert, dass Fehlermeldungen
+// mit ggf. sensiblen Details öffentlich angezeigt werden)
+define('DEBUG', filter_var(env('DEBUG', 'false'), FILTER_VALIDATE_BOOLEAN));
+
+if (DEBUG) {
+    ini_set('display_errors', '1');
+    error_reporting(E_ALL);
+} else {
+    ini_set('display_errors', '0');
+    error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE);
+}
+
+date_default_timezone_set('Europe/Vienna');
