@@ -24,7 +24,8 @@ if ($statusFilter === 'aktiv' || $statusFilter === 'inaktiv') {
     $params['status'] = $statusFilter;
 }
 
-$sql = 'SELECT id, mitgliedsnummer, vorname, nachname, email, status, verified_at, created_at FROM members';
+$sql = 'SELECT id, mitgliedsnummer, vorname, nachname, email, status, verified_at, created_at,
+        nada_zertifikat_gueltig_bis, nada_erlaubnis_gueltig_bis, reisepass_gueltig_bis FROM members';
 if ($where) {
     $sql .= ' WHERE ' . implode(' AND ', $where);
 }
@@ -74,6 +75,8 @@ require __DIR__ . '/../includes/admin_header.php';
             <th>E-Mail</th>
             <th>Status</th>
             <th>Daten geprüft</th>
+            <th>NADA</th>
+            <th>Reisepass</th>
             <th>Angelegt am</th>
             <th></th>
         </tr>
@@ -81,10 +84,23 @@ require __DIR__ . '/../includes/admin_header.php';
     <tbody>
         <?php if (!$members): ?>
         <tr>
-            <td colspan="7" class="empty">Keine Mitglieder gefunden.</td>
+            <td colspan="9" class="empty">Keine Mitglieder gefunden.</td>
         </tr>
         <?php endif; ?>
+        <?php
+        $nadaColors = ['red' => 'red', 'blue' => 'blue', 'yellow' => 'orange', 'ok' => 'green'];
+        $passportColors = ['red' => 'red', 'blue' => 'blue', 'ok' => 'green'];
+        ?>
         <?php foreach ($members as $m): ?>
+        <?php
+            $nadaStatus = worstDateStatus([
+                nadaDateStatus($m['nada_zertifikat_gueltig_bis']),
+                nadaDateStatus($m['nada_erlaubnis_gueltig_bis']),
+            ]);
+            $nadaDate = $nadaStatus === nadaDateStatus($m['nada_zertifikat_gueltig_bis']) && $nadaStatus !== ''
+                ? $m['nada_zertifikat_gueltig_bis'] : $m['nada_erlaubnis_gueltig_bis'];
+            $passportStatus = passportDateStatus($m['reisepass_gueltig_bis']);
+        ?>
         <tr>
             <td><?= e($m['mitgliedsnummer']) ?></td>
             <td><?= e($m['nachname']) ?>, <?= e($m['vorname']) ?></td>
@@ -99,6 +115,25 @@ require __DIR__ . '/../includes/admin_header.php';
                     <span class="badge badge-green" title="Bestätigt am <?= e($m['verified_at']) ?>">✓ Bestätigt</span>
                 <?php else: ?>
                     <span class="badge badge-orange">Ausstehend</span>
+                <?php endif; ?>
+            </td>
+            <td>
+                <?php if ($nadaStatus === ''): ?>
+                    <span class="badge badge-gray">–</span>
+                <?php else: ?>
+                    <span class="badge badge-<?= $nadaColors[$nadaStatus] ?? 'gray' ?>"
+                          title="Zertifikat: <?= e($m['nada_zertifikat_gueltig_bis'] ? date('d.m.Y', strtotime($m['nada_zertifikat_gueltig_bis'])) : '–') ?> · Erlaubnis: <?= e($m['nada_erlaubnis_gueltig_bis'] ? date('d.m.Y', strtotime($m['nada_erlaubnis_gueltig_bis'])) : '–') ?>">
+                        <?= e($nadaDate ? date('d.m.Y', strtotime($nadaDate)) : '–') ?>
+                    </span>
+                <?php endif; ?>
+            </td>
+            <td>
+                <?php if ($passportStatus === ''): ?>
+                    <span class="badge badge-gray">–</span>
+                <?php else: ?>
+                    <span class="badge badge-<?= $passportColors[$passportStatus] ?? 'gray' ?>">
+                        <?= e(date('d.m.Y', strtotime($m['reisepass_gueltig_bis']))) ?>
+                    </span>
                 <?php endif; ?>
             </td>
             <td><?= e(date('d.m.Y', strtotime($m['created_at']))) ?></td>

@@ -173,6 +173,94 @@ function formatDateForInput(?string $date): string
 }
 
 /**
+ * Ampel-Status für ein Ablaufdatum (z. B. NADA-Zertifikat), analog zur
+ * bedingten Formatierung aus der bisherigen Excel-Liste:
+ *   - 'red'    Datum liegt in der Vergangenheit (abgelaufen)
+ *   - 'blue'   Datum liegt innerhalb der nächsten $criticalDays Tage
+ *   - 'yellow' Datum liegt innerhalb der nächsten $warningMonths Monate
+ *   - 'ok'     Datum liegt weiter in der Zukunft
+ *   - ''       kein Datum hinterlegt
+ */
+function dateWarningStatus(?string $date, int $criticalDays, int $warningMonths): string
+{
+    $date = trim((string) $date);
+    if ($date === '' || $date === '0000-00-00') {
+        return '';
+    }
+    $timestamp = strtotime($date);
+    if ($timestamp === false) {
+        return '';
+    }
+
+    $today = strtotime('today');
+    if ($timestamp < $today) {
+        return 'red';
+    }
+    if ($timestamp <= strtotime('+' . $criticalDays . ' days', $today)) {
+        return 'blue';
+    }
+    if ($timestamp <= strtotime('+' . $warningMonths . ' months', $today)) {
+        return 'yellow';
+    }
+    return 'ok';
+}
+
+/** Ampel-Status für NADA-Ablaufdaten: rot=abgelaufen, blau=<=7 Tage, gelb=<=1 Monat. */
+function nadaDateStatus(?string $date): string
+{
+    return dateWarningStatus($date, 7, 1);
+}
+
+/** Ampel-Status für Reisepass-Ablaufdaten: rot=abgelaufen, blau=<=6 Monate, sonst ok (kein Gelb-Zwischenschritt). */
+function passportDateStatus(?string $date): string
+{
+    $date = trim((string) $date);
+    if ($date === '' || $date === '0000-00-00') {
+        return '';
+    }
+    $timestamp = strtotime($date);
+    if ($timestamp === false) {
+        return '';
+    }
+
+    $today = strtotime('today');
+    if ($timestamp < $today) {
+        return 'red';
+    }
+    if ($timestamp <= strtotime('+6 months', $today)) {
+        return 'blue';
+    }
+    return 'ok';
+}
+
+/** Liefert den "schlimmsten" von mehreren Ampel-Status (rot > blau > gelb > ok > kein Datum). */
+function worstDateStatus(array $statuses): string
+{
+    $priority = ['red' => 3, 'blue' => 2, 'yellow' => 1, 'ok' => 0, '' => -1];
+    $worst = '';
+    foreach ($statuses as $status) {
+        if (($priority[$status] ?? -1) > ($priority[$worst] ?? -1)) {
+            $worst = $status;
+        }
+    }
+    return $worst;
+}
+
+/** Baut aus Datum + Ampel-Status ein farbiges Badge-<span> für die Anzeige in Tabellen/Formularen. */
+function renderDateBadge(?string $date, string $status): string
+{
+    $formatted = $date ? e(date('d.m.Y', strtotime($date))) : '–';
+    if ($status === '' || $status === 'ok') {
+        return $formatted;
+    }
+    $colors = ['red' => 'red', 'blue' => 'blue', 'yellow' => 'orange'];
+    $labels = ['red' => 'abgelaufen', 'blue' => 'bald fällig', 'yellow' => 'bald fällig'];
+    $color = $colors[$status] ?? 'gray';
+    $label = $labels[$status] ?? '';
+    return '<span class="badge badge-' . $color . '" title="' . e($label) . '">' . $formatted . '</span>';
+}
+
+/**
  * Sozialversicherungsnummer für die Anzeige maskieren (nur letzte 4 Ziffern sichtbar).
  * Die volle Nummer wird nirgends außer im eigenen Selbstauskunfts-Formular angezeigt.
  */

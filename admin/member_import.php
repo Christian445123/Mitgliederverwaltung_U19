@@ -206,7 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$errors && $step === 'parse') {
             $delimiterMap = ['semicolon' => ';', 'comma' => ',', 'tab' => "\t"];
             $delimiter = $delimiterMap[$delimiterChoice] ?? detectDelimiter($lines[0]);
             $hasHeader = !empty($_POST['has_header']);
-            $rows = array_map(fn($l) => str_getcsv($l, $delimiter), $lines);
+            $rows = array_map(fn($l) => str_getcsv($l, $delimiter, '"', ''), $lines);
             $header = $hasHeader ? array_shift($rows) : null;
 
             if (!$rows) {

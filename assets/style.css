@@ -13,6 +13,8 @@
     --color-error-text: #991b1b;
     --color-warning-bg: #fffbeb;
     --color-warning-text: #92400e;
+    --color-info-bg: #eff6ff;
+    --color-info-text: #1e40af;
     --radius: 8px;
 }
 
@@ -257,6 +259,8 @@ form.member-form button[type=submit] { margin-top: 24px; }
 .badge-green { background: var(--color-success-bg); color: var(--color-success-text); }
 .badge-gray { background: #f3f4f6; color: var(--color-muted); }
 .badge-orange { background: var(--color-warning-bg); color: var(--color-warning-text); }
+.badge-red { background: var(--color-error-bg); color: var(--color-error-text); }
+.badge-blue { background: var(--color-info-bg); color: var(--color-info-text); }
 
 .alert {
     padding: 12px 16px;

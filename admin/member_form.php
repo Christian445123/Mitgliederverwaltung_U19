@@ -301,6 +301,17 @@ require __DIR__ . '/../includes/admin_header.php';
     </div>
 <?php endif; ?>
 
+<?php
+$expiryStatusColors = ['red' => 'red', 'blue' => 'blue', 'yellow' => 'orange'];
+$expiryStatusLabels = ['red' => 'Abgelaufen', 'blue' => 'Bald fällig', 'yellow' => 'Bald fällig'];
+function expiryBadge(string $status, array $colors, array $labels): string
+{
+    if ($status === '' || $status === 'ok' || !isset($colors[$status])) {
+        return '';
+    }
+    return ' <span class="badge badge-' . $colors[$status] . '">' . e($labels[$status]) . '</span>';
+}
+?>
 <form method="post" action="member_form.php<?= $isEdit ? '?id=' . (int) $id : '' ?>" class="member-form" enctype="multipart/form-data" novalidate>
     <?= csrfField() ?>
 
@@ -420,11 +431,11 @@ require __DIR__ . '/../includes/admin_header.php';
         <legend>Zertifikate</legend>
         <div class="form-row">
             <div class="form-group">
-                <label for="nada_zertifikat_gueltig_bis">NADA-Zertifikat gültig bis</label>
+                <label for="nada_zertifikat_gueltig_bis">NADA-Zertifikat gültig bis<?= expiryBadge(nadaDateStatus($member['nada_zertifikat_gueltig_bis']), $expiryStatusColors, $expiryStatusLabels) ?></label>
                 <input type="date" id="nada_zertifikat_gueltig_bis" name="nada_zertifikat_gueltig_bis" value="<?= e(formatDateForInput($member['nada_zertifikat_gueltig_bis'])) ?>">
             </div>
             <div class="form-group">
-                <label for="nada_erlaubnis_gueltig_bis">NADA-Erlaubnis gültig bis</label>
+                <label for="nada_erlaubnis_gueltig_bis">NADA-Erlaubnis gültig bis<?= expiryBadge(nadaDateStatus($member['nada_erlaubnis_gueltig_bis']), $expiryStatusColors, $expiryStatusLabels) ?></label>
                 <input type="date" id="nada_erlaubnis_gueltig_bis" name="nada_erlaubnis_gueltig_bis" value="<?= e(formatDateForInput($member['nada_erlaubnis_gueltig_bis'])) ?>">
             </div>
         </div>
@@ -462,7 +473,7 @@ require __DIR__ . '/../includes/admin_header.php';
                 <input type="date" id="reisepass_ausgestellt_am" name="reisepass_ausgestellt_am" value="<?= e(formatDateForInput($member['reisepass_ausgestellt_am'])) ?>">
             </div>
             <div class="form-group">
-                <label for="reisepass_gueltig_bis">Reisepass gültig bis</label>
+                <label for="reisepass_gueltig_bis">Reisepass gültig bis<?= expiryBadge(passportDateStatus($member['reisepass_gueltig_bis']), $expiryStatusColors, $expiryStatusLabels) ?></label>
                 <input type="date" id="reisepass_gueltig_bis" name="reisepass_gueltig_bis" value="<?= e(formatDateForInput($member['reisepass_gueltig_bis'])) ?>">
             </div>
         </div>
