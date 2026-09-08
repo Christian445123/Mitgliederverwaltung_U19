@@ -57,6 +57,26 @@ function clearEmergencyLoginLockout(): void
     }
 }
 
+/**
+ * Prüft ein Passwort gegen EMERGENCY_ADMIN_PASSWORD_HASH. Unterstützt zwei Formate:
+ * - bcrypt-Hashes von password_hash() (Standard, erzeugt von bin/hash_password.php)
+ * - "sha256:<salt_hex>:<hash_hex>" als Fallback für Umgebungen ohne PHP-CLI beim
+ *   Erstellen des Hashs (z. B. Hash manuell mit einem anderen Tool erzeugt).
+ */
+function verifyEmergencyPassword(string $password, string $storedHash): bool
+{
+    if (str_starts_with($storedHash, 'sha256:')) {
+        $parts = explode(':', $storedHash, 3);
+        if (count($parts) !== 3) {
+            return false;
+        }
+        [, $salt, $hash] = $parts;
+        return hash_equals($hash, hash('sha256', $salt . $password));
+    }
+
+    return password_verify($password, $storedHash);
+}
+
 /** HTML-sicher ausgeben */
 function e(?string $value): string
 {

@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($lockedUntil && $lockedUntil > time()) {
                 $minutesLeft = max(1, (int) ceil(($lockedUntil - time()) / 60));
                 $error = "Zu viele Fehlversuche. Bitte in etwa {$minutesLeft} Minute(n) erneut versuchen.";
-            } elseif (EMERGENCY_ADMIN_PASSWORD_HASH !== '' && password_verify($password, EMERGENCY_ADMIN_PASSWORD_HASH)) {
+            } elseif (EMERGENCY_ADMIN_PASSWORD_HASH !== '' && verifyEmergencyPassword($password, EMERGENCY_ADMIN_PASSWORD_HASH)) {
                 clearEmergencyLoginLockout();
                 loginAdmin(0, EMERGENCY_ADMIN_USERNAME, 'administrator');
                 $_SESSION['emergency_login'] = true;
