@@ -254,11 +254,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$errors && $step === 'import') {
     $token = preg_replace('/[^a-f0-9]/', '', $_POST['token'] ?? '');
     $path = $importDir . '/' . $token . '.json';
 
-    if ($token === '' || !is_file($path)) {
-        $errors[] = 'Die Import-Sitzung ist abgelaufen (mehr als 1 Stunde alt) oder ungültig. Bitte Datei erneut hochladen.';
+    $data = $token !== '' && is_file($path) ? json_decode((string) file_get_contents($path), true) : null;
+
+    if (!is_array($data) || !isset($data['rows']) || !is_array($data['rows'])) {
+        $errors[] = 'Die Import-Sitzung ist abgelaufen, beschädigt oder ungültig. Bitte Datei erneut hochladen.';
         $step = 'upload';
+        if ($token !== '' && is_file($path)) {
+            unlink($path); // beschädigte/leere Datei aufräumen
+        }
     } else {
-        $data = json_decode((string) file_get_contents($path), true);
         $mapping = $_POST['map'] ?? [];
         $dateFields = importDateFields();
 
