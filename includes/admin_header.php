@@ -19,6 +19,7 @@
             <nav class="topbar-nav">
                 <a href="index.php">Mitglieder</a>
                 <?php if (isAdministrator()): ?>
+                    <a href="member_import.php">Import</a>
                     <a href="users.php">Benutzer</a>
                     <a href="update.php">Update</a>
                 <?php endif; ?>

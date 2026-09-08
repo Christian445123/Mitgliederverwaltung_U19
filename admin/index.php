@@ -41,7 +41,12 @@ require __DIR__ . '/../includes/admin_header.php';
 ?>
 <div class="content-header">
     <h1>Mitglieder</h1>
-    <a href="member_form.php" class="btn btn-primary">+ Neues Mitglied</a>
+    <div>
+        <?php if (isAdministrator()): ?>
+            <a href="member_import.php" class="btn btn-secondary">Import</a>
+        <?php endif; ?>
+        <a href="member_form.php" class="btn btn-primary">+ Neues Mitglied</a>
+    </div>
 </div>
 
 <?php if ($flash): ?>
